@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bar, BarChart, XAxis, YAxis, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, LabelList } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { ThemeToggle } from '@/components/app/ThemeToggle';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -351,7 +351,7 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                       </TabsContent>
                        <TabsContent value="quantity">
                         <ChartContainer config={chartConfigBar} className="min-h-[250px] w-full mt-4">
-                            <BarChart accessibilityLayer data={salesData.topItemsByQuantity} layout="vertical" margin={{left: 20, right: 30}}>
+                            <BarChart accessibilityLayer data={salesData.topItemsByQuantity} layout="vertical" margin={{left: 20, right: 40}}>
                             <YAxis
                                 dataKey="name"
                                 type="category"
@@ -368,7 +368,7 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                                 content={<ChartTooltipContent indicator="dot" />}
                             />
                             <Bar dataKey="quantity" layout="vertical" fill="var(--color-quantity)" radius={4}>
-                                
+                                <LabelList dataKey="quantity" position="right" offset={8} className="fill-foreground" fontSize={12} />
                             </Bar>
                             </BarChart>
                         </ChartContainer>
@@ -1783,5 +1783,7 @@ export default function AdminPage() {
     </>
   );
 }
+
+    
 
     
