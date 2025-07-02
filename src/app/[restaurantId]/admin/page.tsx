@@ -35,8 +35,8 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bar, BarChart, XAxis, YAxis, PieChart, Pie, Cell, Legend, LabelList } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { Bar, BarChart, XAxis, YAxis, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { ThemeToggle } from '@/components/app/ThemeToggle';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getDishDescriptionAction, getDailySpecialAction } from '../../actions';
@@ -238,7 +238,7 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
         });
         
         const allItemsSold = Array.from(itemCounts.entries())
-            .map(([detailedName, data]) => ({ detailedName, ...data }))
+            .map(([detailedName, data]) => ({ name: detailedName, ...data }))
             .sort((a, b) => b.revenue - a.revenue);
             
         const topItemsByQuantity = [...allItemsSold].sort((a,b) => b.quantity - a.quantity).slice(0, 5);
@@ -251,13 +251,17 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
       quantity: {
         label: "Cantidad",
         color: "hsl(var(--chart-2))",
-      },
-      revenue: {
-        label: "Ingresos",
-        color: "hsl(var(--chart-1))",
       }
     } satisfies ChartConfig;
     
+    const chartConfigPie: ChartConfig = salesData.topItemsByRevenue.reduce((acc, item, index) => {
+      acc[item.name] = {
+        label: item.name,
+        color: `hsl(var(--chart-${index + 1}))`
+      }
+      return acc;
+    }, {} as ChartConfig);
+
     const periodLabels: { [key: string]: string } = {
         today: "Hoy",
         yesterday: "Ayer",
@@ -318,16 +322,38 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                             <p className="text-2xl font-bold">{salesData.totalOrders}</p>
                         </div>
                     </div>
-                    <Tabs defaultValue="quantity" className="w-full">
+                    <Tabs defaultValue="revenue" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="quantity">Top 5 por Cantidad</TabsTrigger>
                         <TabsTrigger value="revenue">Top 5 por Ingresos</TabsTrigger>
+                        <TabsTrigger value="quantity">Top 5 por Cantidad</TabsTrigger>
                       </TabsList>
-                      <TabsContent value="quantity">
+                      <TabsContent value="revenue">
+                        <ChartContainer config={chartConfigPie} className="min-h-[250px] w-full aspect-square">
+                           <PieChart>
+                             <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                             <Pie data={salesData.topItemsByRevenue} dataKey="revenue" nameKey="name" innerRadius={60}>
+                               {salesData.topItemsByRevenue.map((entry) => (
+                                 <Cell key={entry.name} fill={chartConfigPie[entry.name]?.color} />
+                               ))}
+                             </Pie>
+                             <Legend content={({ payload }) => (
+                               <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
+                                 {payload?.map((entry, index) => (
+                                   <div key={`item-${index}`} className="flex items-center gap-2 text-xs">
+                                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                     <span className="text-muted-foreground">{entry.value}</span>
+                                   </div>
+                                 ))}
+                               </div>
+                             )}/>
+                           </PieChart>
+                        </ChartContainer>
+                      </TabsContent>
+                       <TabsContent value="quantity">
                         <ChartContainer config={chartConfigBar} className="min-h-[250px] w-full mt-4">
                             <BarChart accessibilityLayer data={salesData.topItemsByQuantity} layout="vertical" margin={{left: 20, right: 30}}>
                             <YAxis
-                                dataKey="detailedName"
+                                dataKey="name"
                                 type="category"
                                 tickLine={false}
                                 axisLine={false}
@@ -342,31 +368,7 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                                 content={<ChartTooltipContent indicator="dot" />}
                             />
                             <Bar dataKey="quantity" layout="vertical" fill="var(--color-quantity)" radius={4}>
-                                <LabelList dataKey="quantity" position="right" offset={8} className="fill-foreground" fontSize={12} />
-                            </Bar>
-                            </BarChart>
-                        </ChartContainer>
-                      </TabsContent>
-                      <TabsContent value="revenue">
-                        <ChartContainer config={chartConfigBar} className="min-h-[250px] w-full mt-4">
-                            <BarChart accessibilityLayer data={salesData.topItemsByRevenue} layout="vertical" margin={{left: 20, right: 40}}>
-                            <YAxis
-                                dataKey="detailedName"
-                                type="category"
-                                tickLine={false}
-                                axisLine={false}
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={12}
-                                width={100}
-                                tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
-                            />
-                            <XAxis type="number" dataKey="revenue" hide />
-                            <ChartTooltip
-                                cursor={false}
-                                content={<ChartTooltipContent indicator="dot" />}
-                            />
-                            <Bar dataKey="revenue" layout="vertical" fill="var(--color-revenue)" radius={4}>
-                                <LabelList dataKey="revenue" position="right" offset={8} className="fill-foreground" fontSize={12} formatter={(value: number) => `$${value.toFixed(0)}`} />
+                                
                             </Bar>
                             </BarChart>
                         </ChartContainer>
@@ -400,8 +402,8 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                                 <TableBody>
                                     {salesData.allItemsSold.length > 0 ? (
                                         salesData.allItemsSold.map(item => (
-                                            <TableRow key={item.detailedName}>
-                                                <TableCell className="font-medium">{item.detailedName}</TableCell>
+                                            <TableRow key={item.name}>
+                                                <TableCell className="font-medium">{item.name}</TableCell>
                                                 <TableCell className="text-right">{item.quantity}</TableCell>
                                                 <TableCell className="text-right">${item.revenue.toFixed(2)}</TableCell>
                                             </TableRow>
@@ -1781,3 +1783,5 @@ export default function AdminPage() {
     </>
   );
 }
+
+    
