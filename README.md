@@ -73,3 +73,42 @@ git push -u origin main
 ---
 
 ¡Y listo! Después de ejecutar ese último comando, si refrescas la página de tu repositorio en GitHub, verás todo tu código ahí. A partir de ese momento, ya podemos seguir trabajando normalmente desde el editor.
+
+---
+
+## Parte 2: Desplegar la App en Firebase
+
+¡Excelente! Ya tienes tu código en GitHub. Ahora vamos a publicarlo para que el mundo lo vea.
+
+### Paso 1: Ve a la Consola de Firebase
+
+1.  Abre tu navegador y ve a la [Consola de Firebase](https://console.firebase.google.com/).
+2.  Selecciona tu proyecto `marisqueriaclick`.
+
+### Paso 2: Entra a App Hosting
+
+1.  En el menú de la izquierda, busca la sección **`Build` (Desarrollo)**.
+2.  Haz clic en **`App Hosting`**.
+
+### Paso 3: Crea tu Backend
+
+1.  Verás un botón grande que dice **`Crear backend`**. Dale clic.
+2.  Te pedirá que te conectes con GitHub. Si no lo has hecho, te pedirá permiso para acceder a tus repositorios. **Acepta sin miedo.**
+3.  Una vez conectado, te mostrará una lista de tus repositorios. Busca y selecciona el que acabamos de crear: **`st-33/marisqueria-click-app`**.
+
+### Paso 4: Configura el Despliegue
+
+Esto es lo más importante. Te aparecerá un formulario con dos campos:
+
+1.  **Directorio raíz:** Déjalo como está. Debe decir **`/`**.
+2.  **Rama activa para implementaciones de producción:** Aquí es donde le dices a Firebase qué rama vigilar. Escribe **`main`**.
+
+Dale clic a **`Finalizar e implementar`**.
+
+### Paso 5: ¡A Esperar (Un Poquito)!
+
+Firebase empezará a trabajar. Verás una pantalla que dice que está construyendo y desplegando tu app. Esto puede tardar unos minutos (5-10 min la primera vez).
+
+Cuando termine, te dará una URL pública (algo como `marisqueria-click-app--xxxxx.web.app`). **¡Esa es tu aplicación en vivo!**
+
+A partir de ahora, cada vez que subas un cambio a la rama `main` de tu repositorio en GitHub, Firebase lo detectará y desplegará la nueva versión automáticamente. ¡Ya no tienes que hacer nada más!
