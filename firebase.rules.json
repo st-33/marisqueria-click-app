@@ -1,0 +1,15 @@
+
+{
+  "rules": {
+    "access_codes": {
+      ".read": true,
+      ".write": "auth != null" 
+    },
+    "restaurantes": {
+      "$restaurant_id": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
