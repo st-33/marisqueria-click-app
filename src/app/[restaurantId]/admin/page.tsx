@@ -43,7 +43,7 @@ import { getDishDescriptionAction, getDailySpecialAction } from '../../actions';
 import type { GenerateDailySpecialOutput } from '@/ai/flows/generate-daily-special';
 import { ConnectionStatus } from '@/components/app/ConnectionStatus';
 import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
@@ -830,8 +830,8 @@ export default function AdminPage() {
       });
       
       toast({
-          title: "Restaurante Inicializado",
-          description: "Los datos iniciales (menú, mesas, inventario) han sido cargados y las ventas han sido borradas.",
+          title: "Restaurante Reiniciado",
+          description: "Sistema reiniciado. Se cargaron los datos de ejemplo, incluyendo un historial de ventas para demostración.",
       });
     } catch (error: any) {
        toast({ title: "Error al Reiniciar", description: error.message, variant: "destructive" });

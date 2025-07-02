@@ -179,23 +179,72 @@ export const initialMenu: Menu = {
 
 export const initialCompletedOrders: CompletedOrder[] = [
     {
-      "id": "order-yesterday-1", "tableId": 2, "total": 350.50,
-      "date": "2024-07-28T14:30:00Z",
-      "order": [
-        { "id": "tostada-2-1", "name": "Tostada", "price": 55, "qty": 2, "status": "entregado", "variants": ["Mixta"], "category": "platillos", "menuItemId": "tostada-2" },
-        { "id": "filete-4-1", "name": "Filetes", "price": 200, "qty": 1, "status": "entregado", "variants": ["Empapelado", "Papas Fritas"], "category": "platillos", "menuItemId": "filetes-4" },
-        { "id": "refresco-1-1", "name": "Refresco", "price": 25, "qty": 2, "status": "entregado", "variants": ["Coca-Cola"], "category": "bebidas_postres", "menuItemId": "refrescos-1" }
+      id: "order-yesterday-1",
+      tableId: 2,
+      total: 350.5,
+      date: "2024-07-28T14:30:00.000Z",
+      order: [
+        {
+          id: "tostada-2-1",
+          name: "Tostada",
+          price: 55,
+          qty: 2,
+          status: "entregado",
+          variants: ["Mixta"],
+          category: "platillos",
+          menuItemId: "tostada-2"
+        },
+        {
+          id: "filete-4-1",
+          name: "Filetes",
+          price: 200,
+          qty: 1,
+          status: "entregado",
+          variants: ["Empapelado", "Papas Fritas"],
+          category: "platillos",
+          menuItemId: "filetes-4"
+        },
+        {
+          id: "refresco-1-1",
+          name: "Refresco",
+          price: 25,
+          qty: 2,
+          status: "entregado",
+          variants: ["Coca-Cola"],
+          category: "bebidas_postres",
+          menuItemId: "refrescos-1"
+        }
       ]
     },
-     {
-      "id": "order-yesterday-2", "tableId": 5, "total": 185.00,
-      "date": "2024-07-28T19:00:00Z",
-      "order": [
-        { "id": "coctel-1-2", "name": "Cóctel", "price": 155, "qty": 1, "status": "entregado", "variants": ["Grande", "Campechano"], "category": "platillos", "menuItemId": "coctel-de-mariscos-1" },
-        { "id": "cerveza-3-2", "name": "Cerveza Nacional", "price": 30, "qty": 1, "status": "entregado", "variants": ["Corona"], "category": "bebidas_postres", "menuItemId": "cerveza-nacional-3" }
+    {
+      id: "order-yesterday-2",
+      tableId: 5,
+      total: 185,
+      date: "2024-07-28T19:00:00.000Z",
+      order: [
+        {
+          id: "coctel-1-2",
+          name: "Cóctel",
+          price: 155,
+          qty: 1,
+          status: "entregado",
+          variants: ["Grande", "Campechano"],
+          category: "platillos",
+          menuItemId: "coctel-de-mariscos-1"
+        },
+        {
+          id: "cerveza-3-2",
+          name: "Cerveza Nacional",
+          price: 30,
+          qty: 1,
+          status: "entregado",
+          variants: ["Corona"],
+          category: "bebidas_postres",
+          menuItemId: "cerveza-nacional-3"
+        }
       ]
     }
-];
+  ];
 
 export const initialInventory: InventoryItem[] = [
     { id: 'camaron-1', name: 'Camarón', stock: 10, unit: 'kg', lowStockThreshold: 2 },
