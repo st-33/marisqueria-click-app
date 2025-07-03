@@ -5,7 +5,7 @@ import * as React from 'react';
 import type { Table, OrderItem, MenuItem, TableStatus, Menu, CompletedOrder, OrderItemStatus, InventoryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package, Timer as TimerIcon, Square, PlusCircle } from 'lucide-react';
+import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package, Timer as TimerIcon, Square, PlusCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MenuModal } from '@/components/app/MenuModal';
 import { AccountModal } from '@/components/app/AccountModal';
@@ -483,6 +483,12 @@ export default function WaiterPage() {
     setVoiceModalOpen(false);
   };
 
+  const handleRemoveVoiceOrderItem = (indexToRemove: number) => {
+    setVoiceOrderItems(currentItems => 
+        currentItems.filter((_, index) => index !== indexToRemove)
+    );
+  };
+
   const renderVariants = (variants: string[]) => {
     if (!variants || variants.length === 0) return null;
     
@@ -782,65 +788,68 @@ export default function WaiterPage() {
         />
 
         <Dialog open={isVoiceModalOpen} onOpenChange={setVoiceModalOpen}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center">
-                        <Mic className={cn("mr-2 h-5 w-5", isListening && "text-destructive animate-pulse")} />
-                        Tomar Orden por Voz
-                    </DialogTitle>
-                     <DialogDescription>
-                        {isListening 
-                            ? "Escuchando... Presiona el botón para detener." 
-                            : "Presiona el micrófono para empezar a dictar la orden."
-                        }
+                    <DialogTitle>Asistente de Voz para Órdenes</DialogTitle>
+                    <DialogDescription>
+                        Dicta la orden completa. La IA la analizará y la convertirá en una comanda.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
-                    <div className="min-h-[60px] bg-secondary p-3 rounded-md">
-                        <p className="text-muted-foreground text-sm">Transcripción:</p>
-                        <p>{transcript || "..."}</p>
-                    </div>
-
-                    {isProcessing && (
-                      <div className="flex items-center justify-center text-muted-foreground">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                        <span>Procesando con IA...</span>
-                      </div>
-                    )}
-
-                    {voiceOrderItems.length > 0 && (
-                        <div>
-                            <h4 className="font-semibold mb-2">Platillos Detectados:</h4>
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {voiceOrderItems.map((item, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-secondary p-2 rounded">
-                                        <span><span className="font-bold">{item.qty}x</span> {item.name}</span>
-                                        <span className="text-sm text-muted-foreground">({item.variants.join(', ') || 'sin variantes'})</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-                <DialogFooter className="gap-2 sm:justify-between">
-                    <Button variant="ghost" onClick={() => setVoiceModalOpen(false)}>Cancelar</Button>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
+                
+                <div className="flex flex-col items-center justify-center py-6">
+                    <Button
+                        size="lg"
+                        variant={isListening ? "destructive" : "outline"}
+                        className="rounded-full w-24 h-24 shadow-lg"
                         onClick={isListening ? stopListening : startListening}
                         disabled={isProcessing}
-                      >
-                        {isListening ? (
-                           <Square className="mr-2 h-4 w-4" />
+                    >
+                        {isProcessing ? (
+                            <Loader2 className="h-10 w-10 animate-spin" />
                         ) : (
-                           <Mic className="mr-2 h-4 w-4"/>
+                            <Mic className={cn("h-10 w-10", isListening && "animate-pulse")} />
                         )}
-                        {isListening ? "Detener" : "Grabar de Nuevo"}
-                      </Button>
-                      <Button onClick={handleConfirmVoiceOrder} disabled={voiceOrderItems.length === 0 || isProcessing}>
-                          Confirmar y Agregar
-                      </Button>
+                    </Button>
+                    <p className="mt-4 text-sm text-muted-foreground font-medium">
+                        {isProcessing ? "Procesando orden..." : isListening ? "Escuchando..." : "Toca para hablar"}
+                    </p>
+                </div>
+
+                {(transcript || voiceOrderItems.length > 0) && (
+                    <div className="space-y-4">
+                        {transcript && (
+                            <div className="bg-secondary p-3 rounded-md">
+                                <p className="text-xs text-muted-foreground font-semibold">TU TRANSCRIPCIÓN:</p>
+                                <p className="italic">"{transcript}"</p>
+                            </div>
+                        )}
+                        
+                        {voiceOrderItems.length > 0 && !isProcessing && (
+                            <div>
+                                <h4 className="font-semibold mb-2 text-primary">Platillos Detectados:</h4>
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                    {voiceOrderItems.map((item, index) => (
+                                        <div key={index} className="flex items-center justify-between bg-secondary p-2 rounded-md animate-in fade-in-0">
+                                            <div className="flex-1">
+                                                <span className="font-bold">{item.qty}x {item.name}</span>
+                                                {item.variants.length > 0 && <p className="text-xs text-muted-foreground">({item.variants.join(', ')})</p>}
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveVoiceOrderItem(index)}>
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
+                )}
+
+                <DialogFooter className="mt-4">
+                    <Button variant="ghost" onClick={() => setVoiceModalOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleConfirmVoiceOrder} disabled={voiceOrderItems.length === 0 || isProcessing || isListening}>
+                        Confirmar y Agregar a Comanda
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
