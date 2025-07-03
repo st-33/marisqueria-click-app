@@ -85,7 +85,6 @@ export interface InventoryItem {
 export interface FeatureSet {
   analytics_dashboard: boolean;
   inventory_management: boolean;
-
   pin_security: boolean;
 }
 
