@@ -349,7 +349,7 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                 ) : (
                     <div className="space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                            <Card>
+                            <Card className="transition-all hover:shadow-lg hover:-translate-y-1">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
                                     <DollarSign className="h-4 w-4 text-muted-foreground"/>
@@ -358,7 +358,7 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                                     <div className="text-2xl font-bold">${salesData.totalSales.toFixed(2)}</div>
                                 </CardContent>
                             </Card>
-                            <Card>
+                            <Card className="transition-all hover:shadow-lg hover:-translate-y-1">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Órdenes Totales</CardTitle>
                                     <ShoppingCart className="h-4 w-4 text-muted-foreground"/>
@@ -367,7 +367,7 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                                     <div className="text-2xl font-bold">+{salesData.totalOrders}</div>
                                 </CardContent>
                             </Card>
-                             <Card>
+                             <Card className="transition-all hover:shadow-lg hover:-translate-y-1">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">Ticket Promedio</CardTitle>
                                     <TrendingUp className="h-4 w-4 text-muted-foreground"/>
@@ -1026,7 +1026,7 @@ export default function AdminPage() {
                         </h3>
                         <div className="space-y-3">
                           {sanitizedMenu[categoryKey] && sanitizedMenu[categoryKey].length > 0 ? sanitizedMenu[categoryKey].map(item => (
-                            <div key={item.id} className="flex items-center justify-between bg-background p-3 rounded-lg shadow-sm">
+                            <div key={item.id} className="flex items-center justify-between bg-background p-3 rounded-lg shadow-sm transition-all hover:bg-secondary/50 hover:shadow-md">
                               <div className="flex-1 overflow-hidden pr-4">
                                 <p className="text-lg text-foreground truncate">{item.name} - ${item.price.toFixed(2)}</p>
                                 {item.description && <p className="text-sm text-muted-foreground truncate">{item.description}</p>}

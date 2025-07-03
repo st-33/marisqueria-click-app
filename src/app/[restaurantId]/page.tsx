@@ -25,7 +25,7 @@ export default function RoleSelectionPage() {
 
   if (!isClient) {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary to-blue-800 p-4 w-full">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary to-[hsl(208,35%,15%)] p-4 w-full">
             <Card className="w-full max-w-sm text-center bg-card/90 backdrop-blur-sm">
                 <CardHeader>
                     <Skeleton className="h-8 w-3/4 mx-auto" />
@@ -42,7 +42,7 @@ export default function RoleSelectionPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary to-blue-800 p-4 w-full">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary to-[hsl(208,35%,15%)] p-4 w-full">
       <Card className="w-full max-w-sm text-center bg-card/90 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-3xl font-extrabold text-card-foreground capitalize">{restaurantId.replace(/-/g, ' ')}</CardTitle>

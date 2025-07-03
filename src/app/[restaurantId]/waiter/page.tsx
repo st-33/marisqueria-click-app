@@ -532,7 +532,7 @@ export default function WaiterPage() {
                           key={table.id}
                           onClick={() => handleTableSelect(table.id)}
                           className={cn(
-                              "relative flex flex-col items-center justify-center rounded-lg shadow-md text-white font-bold transition-all duration-200 aspect-square",
+                              "relative flex flex-col items-center justify-center rounded-lg shadow-md text-white font-bold transform transition-all duration-200 aspect-square hover:scale-105",
                               isTakeaway ? (hasOrders ? 'bg-sky-600 hover:bg-sky-600/90' : 'bg-sky-500 hover:bg-sky-500/90') : tableStatusConfig[displayStatus].color,
                               selectedTableId === table.id ? "ring-4 ring-offset-2 ring-primary ring-offset-background" : "ring-0"
                           )}
@@ -578,7 +578,7 @@ export default function WaiterPage() {
                                         const originalMenuItem = menuItems.find(mi => mi.id === item.menuItemId);
                                         const isVariablePrice = originalMenuItem ? originalMenuItem.price === 0 : false;
                                       return (
-                                        <div key={item.id} className="flex items-center gap-2 bg-secondary p-3 rounded-lg shadow-sm">
+                                        <div key={item.id} className="flex items-center gap-2 bg-secondary p-3 rounded-lg shadow-sm transition-transform hover:scale-[1.01]">
                                           <div className="flex flex-1 items-center gap-3 min-w-0">
                                               <span className="font-bold text-lg text-foreground">{item.qty}x</span>
                                               <div className="flex-grow min-w-0">
