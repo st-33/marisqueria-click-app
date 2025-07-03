@@ -50,7 +50,7 @@ import { getDishDescriptionAction, getDailySpecialAction } from '../../actions';
 import type { GenerateDailySpecialOutput } from '@/ai/flows/generate-daily-special';
 import { ConnectionStatus } from '@/components/app/ConnectionStatus';
 import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
@@ -408,7 +408,7 @@ const menuItemSchema = z.object({
     } catch (e) {
       return false;
     }
-  }, { message: `Debe ser un objeto JSON válido, ej: {"Queso Extra": 20}` }),
+  }, { message: 'Debe ser un objeto JSON válido, ej: {"Queso Extra": 20}' }),
   disableRules: z.array(z.object({
     when: z.string().min(1, "La opción 'Cuando' es requerida."),
     disable: z.array(z.string()).min(1, "Debes seleccionar al menos una opción para deshabilitar."),
