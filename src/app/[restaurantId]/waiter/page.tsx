@@ -5,7 +5,7 @@ import * as React from 'react';
 import type { Table, OrderItem, MenuItem, TableStatus, Menu, CompletedOrder, OrderItemStatus, InventoryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package } from 'lucide-react';
+import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package, Timer as TimerIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MenuModal } from '@/components/app/MenuModal';
 import { AccountModal } from '@/components/app/AccountModal';
@@ -27,6 +27,34 @@ const tableStatusConfig: Record<TableStatus, { color: string; text: string }> = 
   libre: { color: 'bg-[hsl(var(--chart-2))] hover:bg-[hsl(var(--chart-2))]/90', text: 'Libre' },
   ocupada: { color: 'bg-destructive hover:bg-destructive/90', text: 'Ocupada' },
   esperando_cuenta: { color: 'bg-accent hover:bg-accent/90', text: 'Cuenta' },
+};
+
+const TableTimer = ({ startTime }: { startTime: string }) => {
+  const [elapsedTime, setElapsedTime] = React.useState("00:00");
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      const start = new Date(startTime).getTime();
+      const now = new Date().getTime();
+      const difference = now - start;
+
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      
+      setElapsedTime(
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      );
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [startTime]);
+
+  return (
+    <div className="absolute bottom-0.5 right-0.5 flex items-center gap-1 text-xs bg-black/50 text-white rounded-bl-md rounded-tr-md px-1 py-0.5">
+      <TimerIcon className="h-3 w-3" />
+      {elapsedTime}
+    </div>
+  );
 };
 
 export default function WaiterPage() {
@@ -98,7 +126,7 @@ export default function WaiterPage() {
     }
   };
   
-  const addOrderItem = async (item: Omit<OrderItem, 'id' | 'status'>, silent = false) => {
+  const addOrderItem = async (item: Omit<OrderItem, 'id' | 'status' | 'sentToKitchenAt'>, silent = false) => {
     if (!selectedTableId) return;
 
     if (item.price === 0) {
@@ -128,6 +156,7 @@ export default function WaiterPage() {
         
         if (table.status === 'libre' && table.id !== 99) {
           table.status = 'ocupada';
+          table.occupiedAt = new Date().toISOString();
         }
 
         return newTables;
@@ -169,6 +198,7 @@ export default function WaiterPage() {
         
         if (tableToUpdate.order.length === 0 && tableToUpdate.status !== 'esperando_cuenta' && tableToUpdate.id !== 99) {
           tableToUpdate.status = 'libre';
+          delete tableToUpdate.occupiedAt;
         }
         
         return newTables;
@@ -225,6 +255,7 @@ export default function WaiterPage() {
             order.forEach((item: OrderItem) => {
                 if (item.status === 'nueva' && (item.category ?? 'platillos') === 'platillos') {
                     item.status = 'enviada_cocina';
+                    item.sentToKitchenAt = new Date().toISOString();
                 }
             });
             newTables[tableIndex].order = order;
@@ -322,6 +353,7 @@ export default function WaiterPage() {
         if (tableIndex !== -1) {
           newTables[tableIndex].status = 'libre';
           newTables[tableIndex].order = [];
+          delete newTables[tableIndex].occupiedAt;
         }
         return newTables;
       });
@@ -573,6 +605,9 @@ export default function WaiterPage() {
                               <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 h-6 w-6 flex items-center justify-center text-xs font-bold animate-bounce">
                                   <ChefHat size={14} />
                               </div>
+                          )}
+                          {table.status !== 'libre' && table.occupiedAt && (
+                            <TableTimer startTime={table.occupiedAt} />
                           )}
                       </button>
                   )

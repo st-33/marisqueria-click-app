@@ -1,5 +1,4 @@
 
-
 export type OrderItemStatus = 'nueva' | 'enviada_cocina' | 'en_preparacion' | 'listo_servir' | 'entregado';
 
 export interface OrderItem {
@@ -11,6 +10,7 @@ export interface OrderItem {
   variants: string[];
   category: 'platillos' | 'bebidas_postres';
   menuItemId: string;
+  sentToKitchenAt?: string;
 }
 
 export type TableStatus = 'libre' | 'ocupada' | 'esperando_cuenta';
@@ -20,6 +20,7 @@ export interface Table {
   status: TableStatus;
   order: OrderItem[];
   name?: string;
+  occupiedAt?: string;
 }
 
 export interface VariantOption {
@@ -57,6 +58,7 @@ export interface MenuItem {
   isMixto?: boolean;
   disableRules?: DisableRule[];
   showRules?: ShowRule[];
+  prepTimeLimit?: number;
 }
 
 export interface Menu {

@@ -27,24 +27,24 @@
       "menu": {
         "platillos": [
           {
-            "id": "coctel-1", "name": "Cóctel", "price": 70,
+            "id": "coctel-1", "name": "Cóctel", "price": 70, "prepTimeLimit": 5,
             "description": "Refrescante cóctel con ingredientes frescos y un toque de la casa.",
             "variantPrices": { "Mediano": 50, "Grande": 80 },
             "variants": [
               { "type": "Tamaño", "options": ["Chico", "Mediano", "Grande"], "isRequired": true },
               { "type": "Tipo", "options": ["Camarón", "Pulpo", "Ostión", "Campechano"], "isRequired": true },
-              { "type": "S/N", "options": ["Cebolla", "Cilantro", "Picante"], "allowMultiple": true }
+              { "type": "S/N", "options": ["Sin Cebolla", "Sin Cilantro", "Sin Picante"], "allowMultiple": true }
             ]
           },
           {
-            "id": "mojarra-2", "name": "Mojarra", "price": 165, "recipe": [],
+            "id": "mojarra-2", "name": "Mojarra", "price": 165, "prepTimeLimit": 15,
             "description": "Mojarra frita entera, servida a tu gusto.",
             "variants": [
               { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "A la mexicana"], "isRequired": true }
             ]
           },
           {
-            "id": "filete-3", "name": "Filete", "price": 165,
+            "id": "filete-3", "name": "Filete", "price": 165, "prepTimeLimit": 12,
             "description": "Suave filete de pescado, preparado a tu elección.",
             "variants": [
               { "type": "Porción", "options": ["Orden Completa", "Media Orden"], "isRequired": true },
@@ -54,24 +54,24 @@
             "variantPrices": { "Media Orden": -65 }
           },
           {
-            "id": "filete-relleno-4", "name": "Filete Empapelado Relleno", "price": 175,
+            "id": "filete-relleno-4", "name": "Filete Empapelado Relleno", "price": 175, "prepTimeLimit": 18,
             "description": "Exquisito filete empapelado y relleno de mariscos.",
             "variants": [
               { "type": "S/N", "options": ["Sin Jitomate", "Sin Pepino", "Sin Aguacate", "Sin Lechuga"], "allowMultiple": true }
             ]
           },
           {
-            "id": "caldo-pelar-5", "name": "Caldo para Pelar", "price": 135,
+            "id": "caldo-pelar-5", "name": "Caldo para Pelar", "price": 135, "prepTimeLimit": 10,
             "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
             "variantPrices": { "Media Orden": -45 }
           },
            {
-            "id": "caldo-filete-6", "name": "Caldo de Filete", "price": 130,
+            "id": "caldo-filete-6", "name": "Caldo de Filete", "price": 130, "prepTimeLimit": 10,
             "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
             "variantPrices": { "Media Orden": -40 }
           },
            {
-            "id": "caldo-mixto-7", "name": "Caldo Mixto", "price": 145,
+            "id": "caldo-mixto-7", "name": "Caldo Mixto", "price": 145, "prepTimeLimit": 12,
             "variants": [
                 { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
                 { "type": "S/N", "options": ["Sin Jaiba", "Sin Pulpo"], "allowMultiple": true }
@@ -79,17 +79,17 @@
             "variantPrices": { "Media Orden": -55 }
           },
            {
-            "id": "caldo-pescado-8", "name": "Caldo de Pescado", "price": 135,
+            "id": "caldo-pescado-8", "name": "Caldo de Pescado", "price": 135, "prepTimeLimit": 10,
             "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
             "variantPrices": { "Media Orden": -45 }
           },
            {
-            "id": "sopa-mariscos-9", "name": "Sopa de Mariscos", "price": 150,
+            "id": "sopa-mariscos-9", "name": "Sopa de Mariscos", "price": 150, "prepTimeLimit": 15,
             "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
             "variantPrices": { "Media Orden": -60 }
           },
           {
-            "id": "camarones-pelar-10", "name": "Camarones para Pelar", "price": 135,
+            "id": "camarones-pelar-10", "name": "Camarones para Pelar", "price": 135, "prepTimeLimit": 12,
             "variants": [
                 { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
                 { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "Empanizados", "Enchipotlados"], "isRequired": true }
@@ -97,7 +97,7 @@
             "variantPrices": { "Media Orden": -45 }
           },
            {
-            "id": "camarones-pelados-11", "name": "Camarones Pelados", "price": 140,
+            "id": "camarones-pelados-11", "name": "Camarones Pelados", "price": 140, "prepTimeLimit": 12,
             "variants": [
                 { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
                 { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "Empanizados", "Enchipotlados"], "isRequired": true }
@@ -105,7 +105,7 @@
             "variantPrices": { "Media Orden": -50 }
           },
           {
-            "id": "camarones-mixtos-12", "name": "Camarones Mixtos", "price": 175, "isMixto": true,
+            "id": "camarones-mixtos-12", "name": "Camarones Mixtos", "price": 175, "isMixto": true, "prepTimeLimit": 18,
             "description": "Elige dos de nuestras preparaciones especiales. Puedes combinar camarón y pulpo.",
             "variants": [
               { "type": "Preparación", "options": ["Al mojo de ajo", "A la diabla", "Enchipotlados", "Empanizados"], "isRequired": true, "isDobleSeleccion": true },
@@ -113,24 +113,24 @@
             ]
           },
           {
-            "id": "camarones-coco-13", "name": "Camarones Coco", "price": 165,
+            "id": "camarones-coco-13", "name": "Camarones Coco", "price": 165, "prepTimeLimit": 15,
             "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
             "variantPrices": { "Media Orden": -75 }
           },
           {
-            "id": "pulpo-14", "name": "Pulpo", "price": 135,
+            "id": "pulpo-14", "name": "Pulpo", "price": 135, "prepTimeLimit": 12,
             "variants": [
                 { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
                 { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "Enchipotlado", "A la mexicana", "Encebollado"], "isRequired": true }
             ],
             "variantPrices": { "Media Orden": -45 }
           },
-          { "id": "ensalada-mariscos-15", "name": "Ensalada de Mariscos", "price": 150, "variants": [] },
-          { "id": "ensalada-camaron-pescado-16", "name": "Ensalada de Camarón y Pescado", "price": 150, "variants": [] },
-          { "id": "tostada-camaron-17", "name": "Tostada de Camarón", "price": 40, "variants": [] },
-          { "id": "tostada-pescado-18", "name": "Tostada de Pescado", "price": 40, "variants": [] },
-          { "id": "empanada-camaron-19", "name": "Empanada de Camarón", "price": 35, "variants": [] },
-          { "id": "empanada-pescado-20", "name": "Empanada de Pescado", "price": 35, "variants": [] }
+          { "id": "ensalada-mariscos-15", "name": "Ensalada de Mariscos", "price": 150, "prepTimeLimit": 8, "variants": [] },
+          { "id": "ensalada-camaron-pescado-16", "name": "Ensalada de Camarón y Pescado", "price": 150, "prepTimeLimit": 8, "variants": [] },
+          { "id": "tostada-camaron-17", "name": "Tostada de Camarón", "price": 40, "prepTimeLimit": 5, "variants": [] },
+          { "id": "tostada-pescado-18", "name": "Tostada de Pescado", "price": 40, "prepTimeLimit": 5, "variants": [] },
+          { "id": "empanada-camaron-19", "name": "Empanada de Camarón", "price": 35, "prepTimeLimit": 7, "variants": [] },
+          { "id": "empanada-pescado-20", "name": "Empanada de Pescado", "price": 35, "prepTimeLimit": 7, "variants": [] }
         ],
         "bebidas_postres": [
           { 

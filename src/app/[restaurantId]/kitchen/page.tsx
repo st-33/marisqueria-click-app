@@ -3,8 +3,8 @@
 
 import * as React from 'react';
 import { useParams } from 'next/navigation';
-import { initialTables } from '@/lib/data';
-import type { Table, OrderItem } from '@/lib/types';
+import { initialTables, initialMenu } from '@/lib/data';
+import type { Table, OrderItem, Menu, MenuItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BackButton } from '@/components/app/BackButton';
@@ -14,6 +14,45 @@ import useRealtimeData from '@/hooks/useRealtimeData';
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from '@/components/app/ThemeToggle';
 import { ConnectionStatus } from '@/components/app/ConnectionStatus';
+import { Timer, TriangleAlert } from 'lucide-react';
+
+const KitchenTimer = ({ startTime, timeLimitMinutes }: { startTime: string; timeLimitMinutes?: number }) => {
+  const [elapsedTime, setElapsedTime] = React.useState("00:00");
+  const [isOverTime, setIsOverTime] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      const start = new Date(startTime).getTime();
+      const now = new Date().getTime();
+      const difference = now - start;
+
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      
+      setElapsedTime(
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      );
+
+      if (timeLimitMinutes && minutes >= timeLimitMinutes) {
+        setIsOverTime(true);
+      } else {
+        setIsOverTime(false);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [startTime, timeLimitMinutes]);
+
+  return (
+    <div className={cn("flex items-center gap-1 text-sm font-semibold rounded-full px-2 py-0.5 mt-2 w-fit", 
+      isOverTime ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+    )}>
+      {isOverTime ? <TriangleAlert className="h-4 w-4" /> : <Timer className="h-4 w-4" />}
+      <span>{elapsedTime}</span>
+    </div>
+  );
+};
+
 
 export default function KitchenPage() {
   const { toast } = useToast();
@@ -25,6 +64,12 @@ export default function KitchenPage() {
   }, [toast]);
   
   const [tables, updateTables, tablesLoading, isConnected] = useRealtimeData<Table[]>(restaurantId, 'tables', initialTables, handleDbError);
+  const [menu, , menuLoading] = useRealtimeData<Menu>(restaurantId, 'menu', initialMenu, handleDbError);
+
+  const menuItems = React.useMemo(() => {
+    if (!menu) return [];
+    return [...(menu.platillos || []), ...(menu.bebidas_postres || [])];
+  }, [menu]);
   
   const updateOrderItemStatus = async (tableId: number, itemId: string, newStatus: OrderItem['status']) => {
     try {
@@ -70,7 +115,7 @@ export default function KitchenPage() {
     entregado: { text: "Entregado", color: "text-muted-foreground" },
   };
 
-  if (tablesLoading) {
+  if (tablesLoading || menuLoading) {
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
           <div className="text-center">
@@ -139,41 +184,50 @@ export default function KitchenPage() {
                     <CardTitle className="text-2xl">Mesa #{table.id}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-1 space-y-4 p-6">
-                    {table.order.map(item => (
-                      <div key={item.id} className="bg-background rounded-lg p-4 shadow-sm">
-                        <p className="font-semibold text-2xl text-foreground">{item.qty}x {item.name}</p>
-                        {renderVariants(item.variants)}
-                        <p className="text-md mt-2">
-                          Estado: <span className={cn("font-bold", orderItemStatusConfig[item.status]?.color || 'text-gray-500')}>
-                            {orderItemStatusConfig[item.status]?.text || item.status}
-                          </span>
-                        </p>
-                        <div className="mt-3 flex space-x-2">
-                          {item.status === 'enviada_cocina' && (
-                            <Button 
-                              className="w-full"
-                              variant="secondary"
-                              onClick={() => updateOrderItemStatus(table.id, item.id, 'en_preparacion')}
-                            >
-                              Preparar
-                            </Button>
+                    {table.order.map(item => {
+                      const menuItem = menuItems.find(mi => mi.id === item.menuItemId);
+                      return (
+                        <div key={item.id} className="bg-background rounded-lg p-4 shadow-sm">
+                          <p className="font-semibold text-2xl text-foreground">{item.qty}x {item.name}</p>
+                          {renderVariants(item.variants)}
+                           {item.sentToKitchenAt && (
+                            <KitchenTimer 
+                              startTime={item.sentToKitchenAt} 
+                              timeLimitMinutes={menuItem?.prepTimeLimit}
+                            />
                           )}
-                          {item.status === 'en_preparacion' && (
-                            <Button 
-                              className="w-full bg-[hsl(var(--chart-2))] hover:bg-[hsl(var(--chart-2))]/90 text-primary-foreground"
-                              onClick={() => updateOrderItemStatus(table.id, item.id, 'listo_servir')}
-                            >
-                              Listo para Servir
-                            </Button>
-                          )}
-                          {item.status === 'listo_servir' && (
-                             <div className="w-full text-center text-sm py-2 text-muted-foreground font-medium rounded-md bg-gray-100 dark:bg-gray-800">
-                                Esperando entrega
-                              </div>
-                          )}
+                          <p className="text-md mt-2">
+                            Estado: <span className={cn("font-bold", orderItemStatusConfig[item.status]?.color || 'text-gray-500')}>
+                              {orderItemStatusConfig[item.status]?.text || item.status}
+                            </span>
+                          </p>
+                          <div className="mt-3 flex space-x-2">
+                            {item.status === 'enviada_cocina' && (
+                              <Button 
+                                className="w-full"
+                                variant="secondary"
+                                onClick={() => updateOrderItemStatus(table.id, item.id, 'en_preparacion')}
+                              >
+                                Preparar
+                              </Button>
+                            )}
+                            {item.status === 'en_preparacion' && (
+                              <Button 
+                                className="w-full bg-[hsl(var(--chart-2))] hover:bg-[hsl(var(--chart-2))]/90 text-primary-foreground"
+                                onClick={() => updateOrderItemStatus(table.id, item.id, 'listo_servir')}
+                              >
+                                Listo para Servir
+                              </Button>
+                            )}
+                            {item.status === 'listo_servir' && (
+                               <div className="w-full text-center text-sm py-2 text-muted-foreground font-medium rounded-md bg-gray-100 dark:bg-gray-800">
+                                  Esperando entrega
+                                </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </CardContent>
                 </Card>
               ))}
