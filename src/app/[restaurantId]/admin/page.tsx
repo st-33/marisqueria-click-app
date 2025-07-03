@@ -11,7 +11,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, Plus, Sparkles, X, Package, Eye, BookText, ChevronsUpDown, GitBranchPlus, Combine, Lightbulb, ChefHat, ShieldCheck, History, LayoutDashboard, Utensils, Warehouse, Table as TableIcon } from 'lucide-react';
+import { Pencil, Trash2, Plus, Sparkles, X, Package, Eye, BookText, ChevronsUpDown, GitBranchPlus, Combine, Lightbulb, ChefHat, ShieldCheck, History, LayoutDashboard, Utensils, Warehouse, Table as TableIcon, DollarSign, ShoppingCart, TrendingUp } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import useRealtimeData from '@/hooks/useRealtimeData';
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/sheet";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bar, BarChart, XAxis, YAxis, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, LabelList } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, LabelList, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { ThemeToggle } from '@/components/app/ThemeToggle';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -180,10 +180,10 @@ const DailySpecial = ({ menu, inventory, isLoading }: { menu: Menu, inventory: I
 };
 
 const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null, isLoading: boolean }) => {
-    const [salesPeriod, setSalesPeriod] = React.useState("today");
+    const [salesPeriod, setSalesPeriod] = React.useState("last7days");
 
     const salesData = React.useMemo(() => {
-        if (!orders || !Array.isArray(orders)) return { totalSales: 0, totalOrders: 0, allItemsSold: [], topItemsByQuantity: [], topItemsByRevenue: [] };
+        if (!orders || !Array.isArray(orders)) return { totalSales: 0, totalOrders: 0, averageOrderValue: 0, allItemsSold: [], topItemsByQuantity: [], topItemsByRevenue: [], dailySales: [] };
         
         const now = new Date();
         let startDate: Date;
@@ -230,6 +230,24 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
 
         const totalSales = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0);
         const totalOrders = filteredOrders.length;
+        const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+
+        const dailySalesMap = new Map<string, number>();
+        filteredOrders.forEach(order => {
+            const orderDate = new Date(order.date);
+            const day = orderDate.toISOString().split('T')[0];
+            const currentSales = dailySalesMap.get(day) || 0;
+            dailySalesMap.set(day, currentSales + order.total);
+        });
+
+        const dailySales = Array.from(dailySalesMap.entries())
+            .map(([day, sales]) => ({ date: new Date(day), sales }))
+            .sort((a, b) => a.date.getTime() - b.date.getTime())
+            .map(item => ({
+                date: format(item.date, "d MMM", { locale: es }),
+                Ventas: item.sales
+            }));
+
 
         const itemCounts = new Map<string, { quantity: number; revenue: number }>();
         filteredOrders.forEach(order => {
@@ -253,8 +271,15 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
         const topItemsByQuantity = [...allItemsSold].sort((a,b) => b.quantity - a.quantity).slice(0, 5);
         const topItemsByRevenue = [...allItemsSold].sort((a,b) => b.revenue - a.revenue).slice(0, 5);
         
-        return { totalSales, totalOrders, allItemsSold, topItemsByQuantity, topItemsByRevenue };
+        return { totalSales, totalOrders, averageOrderValue, allItemsSold, topItemsByQuantity, topItemsByRevenue, dailySales };
     }, [orders, salesPeriod]);
+
+    const chartConfigArea = {
+        Ventas: {
+            label: "Ventas",
+            color: "hsl(var(--chart-1))",
+        },
+    } satisfies ChartConfig;
 
     const chartConfigBar = {
       quantity: {
@@ -278,9 +303,10 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                     <Skeleton className="h-8 w-3/4" />
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
                     </div>
                     <div>
                         <Skeleton className="h-6 w-1/2 mb-4" />
@@ -294,10 +320,13 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
     return (
         <Card className="shadow-lg">
             <CardHeader>
-                <div className="flex justify-between items-center">
-                    <CardTitle>Análisis de Ventas</CardTitle>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <CardTitle>Análisis de Ventas</CardTitle>
+                        <CardDescription>Métricas clave y tendencias de tu restaurante.</CardDescription>
+                    </div>
                     <Select value={salesPeriod} onValueChange={setSalesPeriod}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Seleccionar periodo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -310,69 +339,128 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                     </Select>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                        <p className="text-sm text-muted-foreground">Ventas Totales</p>
-                        <p className="text-2xl font-bold">${salesData.totalSales.toFixed(2)}</p>
+            <CardContent>
+                {salesData.totalOrders === 0 ? (
+                    <div className="text-center py-16 text-muted-foreground">
+                        <LayoutDashboard className="mx-auto h-12 w-12 mb-4" />
+                        <h3 className="text-xl font-semibold">Sin Datos de Ventas</h3>
+                        <p>No se encontraron órdenes completadas en el periodo seleccionado.</p>
                     </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground">Órdenes Totales</p>
-                        <p className="text-2xl font-bold">{salesData.totalOrders}</p>
+                ) : (
+                    <div className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
+                                    <DollarSign className="h-4 w-4 text-muted-foreground"/>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">${salesData.totalSales.toFixed(2)}</div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Órdenes Totales</CardTitle>
+                                    <ShoppingCart className="h-4 w-4 text-muted-foreground"/>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">+{salesData.totalOrders}</div>
+                                </CardContent>
+                            </Card>
+                             <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">Ticket Promedio</CardTitle>
+                                    <TrendingUp className="h-4 w-4 text-muted-foreground"/>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">${salesData.averageOrderValue.toFixed(2)}</div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                        
+                        <div>
+                            <h4 className="text-lg font-semibold mb-2">Ventas a lo largo del tiempo</h4>
+                            <ChartContainer config={chartConfigArea} className="h-[250px] w-full">
+                                <AreaChart accessibilityLayer data={salesData.dailySales} margin={{ left: 12, right: 12, top: 10, bottom: 10 }}>
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis
+                                        dataKey="date"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={8}
+                                    />
+                                    <YAxis
+                                      tickLine={false}
+                                      axisLine={false}
+                                      tickMargin={8}
+                                      tickFormatter={(value) => `$${value}`}
+                                    />
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                    <Area
+                                        dataKey="Ventas"
+                                        type="natural"
+                                        fill="var(--color-Ventas)"
+                                        fillOpacity={0.4}
+                                        stroke="var(--color-Ventas)"
+                                    />
+                                </AreaChart>
+                            </ChartContainer>
+                        </div>
+
+                        <div>
+                            <h4 className="text-lg font-semibold mb-4">Productos más vendidos</h4>
+                            <Tabs defaultValue="revenue" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="revenue">Top 5 por Ingresos</TabsTrigger>
+                                    <TabsTrigger value="quantity">Top 5 por Cantidad</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="revenue">
+                                    <ChartContainer config={chartConfigPie} className="min-h-[250px] w-full aspect-square">
+                                        <PieChart>
+                                            <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                                            <Pie data={salesData.topItemsByRevenue} dataKey="revenue" nameKey="name" innerRadius={60}>
+                                                {salesData.topItemsByRevenue.map((entry) => (
+                                                    <Cell key={entry.name} fill={chartConfigPie[entry.name]?.color} />
+                                                ))}
+                                            </Pie>
+                                            <Legend content={({ payload }) => (
+                                                <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
+                                                    {payload?.map((entry, index) => (
+                                                        <div key={`item-${index}`} className="flex items-center gap-2 text-xs">
+                                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                            <span className="text-muted-foreground">{entry.value}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}/>
+                                        </PieChart>
+                                    </ChartContainer>
+                                </TabsContent>
+                                <TabsContent value="quantity">
+                                    <ChartContainer config={chartConfigBar} className="min-h-[250px] w-full mt-4">
+                                        <BarChart accessibilityLayer data={salesData.topItemsByQuantity} layout="vertical" margin={{left: 20, right: 40}}>
+                                            <YAxis
+                                                dataKey="name"
+                                                type="category"
+                                                tickLine={false}
+                                                axisLine={false}
+                                                stroke="hsl(var(--muted-foreground))"
+                                                fontSize={12}
+                                                width={100}
+                                                tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
+                                            />
+                                            <XAxis type="number" dataKey="quantity" hide />
+                                            <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                            <Bar dataKey="quantity" layout="vertical" fill="var(--color-quantity)" radius={4}>
+                                                <LabelList dataKey="quantity" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                                            </Bar>
+                                        </BarChart>
+                                    </ChartContainer>
+                                </TabsContent>
+                            </Tabs>
+                        </div>
                     </div>
-                </div>
-                <Tabs defaultValue="revenue" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="revenue">Top 5 por Ingresos</TabsTrigger>
-                    <TabsTrigger value="quantity">Top 5 por Cantidad</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="revenue">
-                    <ChartContainer config={chartConfigPie} className="min-h-[250px] w-full aspect-square">
-                        <PieChart>
-                            <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                            <Pie data={salesData.topItemsByRevenue} dataKey="revenue" nameKey="name" innerRadius={60}>
-                            {salesData.topItemsByRevenue.map((entry) => (
-                                <Cell key={entry.name} fill={chartConfigPie[entry.name]?.color} />
-                            ))}
-                            </Pie>
-                            <Legend content={({ payload }) => (
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
-                                {payload?.map((entry, index) => (
-                                <div key={`item-${index}`} className="flex items-center gap-2 text-xs">
-                                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                                    <span className="text-muted-foreground">{entry.value}</span>
-                                </div>
-                                ))}
-                            </div>
-                            )}/>
-                        </PieChart>
-                    </ChartContainer>
-                    </TabsContent>
-                    <TabsContent value="quantity">
-                    <ChartContainer config={chartConfigBar} className="min-h-[250px] w-full mt-4">
-                        <BarChart accessibilityLayer data={salesData.topItemsByQuantity} layout="vertical" margin={{left: 20, right: 40}}>
-                        <YAxis
-                            dataKey="name"
-                            type="category"
-                            tickLine={false}
-                            axisLine={false}
-                            stroke="hsl(var(--muted-foreground))"
-                            fontSize={12}
-                            width={100}
-                            tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
-                        />
-                        <XAxis type="number" dataKey="quantity" hide />
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent indicator="dot" />}
-                        />
-                        <Bar dataKey="quantity" layout="vertical" fill="var(--color-quantity)" radius={4}>
-                            <LabelList dataKey="quantity" position="right" offset={8} className="fill-foreground" fontSize={12} />
-                        </Bar>
-                        </BarChart>
-                    </ChartContainer>
-                    </TabsContent>
-                </Tabs>
+                )}
             </CardContent>
         </Card>
     );
@@ -404,12 +492,9 @@ const menuItemSchema = z.object({
   variantPrices: z.string().optional().refine((val) => {
     if (!val || val.trim() === "" || val.trim() === "{}") return true;
     try {
-      // Intenta parsear el string como JSON
       const parsed = JSON.parse(val);
-      // Asegura que sea un objeto, no un array o null
       return typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null;
     } catch (e) {
-      // Si el parseo falla, no es un JSON válido
       return false;
     }
   }, { message: 'Debe ser un objeto JSON válido, ej: {"Queso Extra": 20}' }),

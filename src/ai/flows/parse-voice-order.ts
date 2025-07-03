@@ -55,9 +55,9 @@ const prompt = ai.definePrompt({
 **Ejemplos de la lógica a seguir con el menú actual:**
 *   **Orden de voz:** "mándame dos tostadas de camarón, un filete empanizado media orden sin pepino y una coca de vidrio"
 *   **Análisis:**
-    *   "dos tostadas de camarón" -> `qty: 2, name: "Tostada de Camarón"`.
-    *   "un filete empanizado media orden sin pepino" -> `qty: 1, name: "Filete", variants: ["Empanizado", "Media Orden", "Sin Pepino"]`.
-    *   "una coca de vidrio" -> `qty: 1, name: "Coca-Cola Vidrio"`.
+    *   "dos tostadas de camarón" se convierte en: {qty: 2, name: "Tostada de Camarón"}.
+    *   "un filete empanizado media orden sin pepino" se convierte en: {qty: 1, name: "Filete", variants: ["Empanizado", "Media Orden", "Sin Pepino"]}.
+    *   "una coca de vidrio" se convierte en: {qty: 1, name: "Coca-Cola Vidrio"}.
 *   **Salida JSON Correcta:** \`{"items": [{"qty": 2, "name": "Tostada de Camarón", "variants": []}, {"qty": 1, "name": "Filete", "variants": ["Empanizado", "Media Orden", "Sin Pepino"]}, {"qty": 1, "name": "Coca-Cola Vidrio", "variants": []}]}\`
 
 *   **Orden de voz:** "un cóctel grande de pulpo sin cilantro y una michelada con camarones"
