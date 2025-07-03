@@ -5,7 +5,7 @@ import * as React from 'react';
 import type { Table, OrderItem, MenuItem, TableStatus, Menu, CompletedOrder, OrderItemStatus, InventoryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil } from 'lucide-react';
+import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MenuModal } from '@/components/app/MenuModal';
 import { AccountModal } from '@/components/app/AccountModal';
@@ -16,10 +16,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ThemeToggle } from '@/components/app/ThemeToggle';
 import { ConnectionStatus } from '@/components/app/ConnectionStatus';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { initialMenu, initialCompletedOrders, initialTables, initialInventory } from '@/lib/data';
 import { useParams } from 'next/navigation';
+import { parseVoiceOrderAction } from '@/app/actions';
+import type { ParseVoiceOrderOutput } from '@/ai/flows/parse-voice-order';
 
 const tableStatusConfig: Record<TableStatus, { color: string; text: string }> = {
   libre: { color: 'bg-[hsl(var(--chart-2))] hover:bg-[hsl(var(--chart-2))]/90', text: 'Libre' },
@@ -46,6 +48,14 @@ export default function WaiterPage() {
   const [isAccountModalOpen, setAccountModalOpen] = React.useState(false);
   const [itemToEditPrice, setItemToEditPrice] = React.useState<OrderItem | null>(null);
   const [newPrice, setNewPrice] = React.useState<string>("");
+
+  const [isVoiceModalOpen, setVoiceModalOpen] = React.useState(false);
+  const [isListening, setIsListening] = React.useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [transcript, setTranscript] = React.useState("");
+  const [voiceOrderItems, setVoiceOrderItems] = React.useState<ParseVoiceOrderOutput['items']>([]);
+  const recognitionRef = React.useRef<any>(null);
+
 
   const selectedTable = React.useMemo(() => tables?.find(t => t.id === selectedTableId), [tables, selectedTableId]);
   
@@ -88,7 +98,7 @@ export default function WaiterPage() {
     }
   };
   
-  const addOrderItem = async (item: Omit<OrderItem, 'id' | 'status'>) => {
+  const addOrderItem = async (item: Omit<OrderItem, 'id' | 'status'>, silent = false) => {
     if (!selectedTableId) return;
 
     if (item.price === 0) {
@@ -97,6 +107,7 @@ export default function WaiterPage() {
             description: `Por favor, establece el precio para "${item.name}" usando el ícono del lápiz.`,
             variant: "destructive",
         });
+        return; // Return a value or promise to indicate failure
     }
 
     const newOrderItem: OrderItem = {
@@ -122,7 +133,7 @@ export default function WaiterPage() {
         return newTables;
       });
 
-      if (item.price > 0) {
+      if (!silent && item.price > 0) {
         toast({ title: "Producto Agregado", description: `${item.qty}x ${item.name} añadido a la mesa #${selectedTableId}.` });
       }
       setMenuModalOpen(false);
@@ -376,6 +387,107 @@ export default function WaiterPage() {
     }
   };
 
+  const handleStartListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        toast({ title: "Navegador no compatible", description: "La toma de pedidos por voz no está disponible en tu navegador.", variant: "destructive"});
+        return;
+    }
+
+    if (!recognitionRef.current) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'es-MX';
+        recognition.interimResults = true;
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            setTranscript('');
+            setVoiceOrderItems([]);
+        };
+
+        recognition.onresult = (event: any) => {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                finalTranscript += event.results[i][0].transcript;
+            }
+            setTranscript(finalTranscript);
+        };
+        
+        recognition.onend = async () => {
+            setIsListening(false);
+            if (transcript.trim()) {
+                setIsProcessing(true);
+                try {
+                    const parsedItems = await parseVoiceOrderAction(transcript.trim(), menu!);
+                    setVoiceOrderItems(parsedItems);
+                    if (parsedItems.length === 0) {
+                      toast({ title: "No se detectaron platillos", description: "No se pudo reconocer ningún platillo del menú en tu orden. Intenta de nuevo."});
+                    }
+                } catch (error) {
+                    toast({ title: "Error de IA", description: "No se pudo procesar la orden.", variant: "destructive"});
+                } finally {
+                    setIsProcessing(false);
+                }
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('Speech recognition error', event.error);
+            setIsListening(false);
+            toast({ title: "Error de micrófono", description: "No se pudo acceder al micrófono.", variant: "destructive"});
+        };
+        
+        recognitionRef.current = recognition;
+    }
+    
+    setVoiceModalOpen(true);
+    recognitionRef.current.start();
+  };
+  
+  const handleConfirmVoiceOrder = async () => {
+    if (voiceOrderItems.length === 0) return;
+
+    const itemsToAdd = voiceOrderItems.map(pItem => {
+        const menuItem = menuItems.find(m => m.name.toLowerCase() === pItem.name.toLowerCase());
+        if (!menuItem) {
+            toast({ title: "Platillo no encontrado", description: `"${pItem.name}" no se encontró en el menú.`});
+            return null;
+        }
+
+        let finalPrice = menuItem.price;
+        if (menuItem.variantPrices) {
+            pItem.variants.forEach(variant => {
+                if (menuItem.variantPrices && menuItem.variantPrices[variant]) {
+                    finalPrice += menuItem.variantPrices[variant];
+                }
+            });
+        }
+        
+        const category = menu!.platillos.some(p => p.id === menuItem.id) ? 'platillos' : 'bebidas_postres';
+
+        return {
+            name: menuItem.name,
+            price: finalPrice,
+            qty: pItem.qty,
+            variants: pItem.variants,
+            category: category,
+            menuItemId: menuItem.id
+        };
+    }).filter(Boolean);
+
+    if (itemsToAdd.length > 0) {
+      for (const item of itemsToAdd) {
+        await addOrderItem(item as Omit<OrderItem, 'id' | 'status'>, true);
+      }
+      toast({ title: "Orden Agregada", description: `${itemsToAdd.length} tipo(s) de producto(s) agregados a la comanda.`});
+    }
+
+    setVoiceModalOpen(false);
+    setTranscript('');
+    setVoiceOrderItems([]);
+  };
+
   const renderVariants = (variants: string[]) => {
     if (!variants || variants.length === 0) return null;
     
@@ -573,7 +685,7 @@ export default function WaiterPage() {
                     <span className="text-xl font-bold">TOTAL:</span>
                     <span className="text-3xl font-extrabold text-primary">${calculateOrderTotal().toFixed(2)}</span>
                 </div>
-                 <div className="grid grid-cols-3 gap-3 w-full">
+                 <div className="grid grid-cols-4 gap-3 w-full">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button size="lg" variant="secondary" onClick={() => setMenuModalOpen(true)} className="h-14">
@@ -582,6 +694,16 @@ export default function WaiterPage() {
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Añadir Producto</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="lg" variant="secondary" onClick={handleStartListening} className="h-14">
+                        <Mic className="h-6 w-6"/>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Tomar Orden por Voz</p>
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
@@ -620,7 +742,7 @@ export default function WaiterPage() {
           isOpen={isMenuModalOpen}
           onClose={() => setMenuModalOpen(false)}
           menu={menu}
-          onAddItem={addOrderItem}
+          onAddItem={(item) => addOrderItem(item)}
         />
 
         <AccountModal
@@ -630,6 +752,59 @@ export default function WaiterPage() {
           total={calculateOrderTotal()}
           onMarkAsPaid={markAsPaid}
         />
+
+        <Dialog open={isVoiceModalOpen} onOpenChange={setVoiceModalOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center">
+                        <Mic className={cn("mr-2 h-5 w-5", isListening && "text-destructive animate-pulse")} />
+                        Tomar Orden por Voz
+                    </DialogTitle>
+                    <DialogDescription>
+                        {isListening ? "Escuchando..." : "Presiona el micrófono para empezar a dictar la orden."}
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div className="min-h-[60px] bg-secondary p-3 rounded-md">
+                        <p className="text-muted-foreground text-sm">Transcripción:</p>
+                        <p>{transcript || "..."}</p>
+                    </div>
+
+                    {isProcessing && (
+                      <div className="flex items-center justify-center text-muted-foreground">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                        <span>Procesando con IA...</span>
+                      </div>
+                    )}
+
+                    {voiceOrderItems.length > 0 && (
+                        <div>
+                            <h4 className="font-semibold mb-2">Platillos Detectados:</h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                {voiceOrderItems.map((item, index) => (
+                                    <div key={index} className="flex items-center justify-between bg-secondary p-2 rounded">
+                                        <span><span className="font-bold">{item.qty}x</span> {item.name}</span>
+                                        <span className="text-sm text-muted-foreground">({item.variants.join(', ') || 'sin variantes'})</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter className="gap-2 sm:justify-between">
+                    <Button variant="ghost" onClick={() => setVoiceModalOpen(false)}>Cancelar</Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={handleStartListening} disabled={isListening || isProcessing}>
+                          <Mic className="mr-2 h-4 w-4"/>
+                          {isListening ? "Escuchando..." : "Grabar de Nuevo"}
+                      </Button>
+                      <Button onClick={handleConfirmVoiceOrder} disabled={voiceOrderItems.length === 0 || isProcessing}>
+                          Confirmar y Agregar
+                      </Button>
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
 
         <Dialog open={!!itemToEditPrice} onOpenChange={(isOpen) => !isOpen && setItemToEditPrice(null)}>
             <DialogContent className="max-w-xs">
