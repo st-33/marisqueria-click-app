@@ -5,7 +5,7 @@ import * as React from 'react';
 import type { Table, OrderItem, MenuItem, TableStatus, Menu, CompletedOrder, OrderItemStatus, InventoryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2 } from 'lucide-react';
+import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MenuModal } from '@/components/app/MenuModal';
 import { AccountModal } from '@/components/app/AccountModal';
@@ -93,7 +93,7 @@ export default function WaiterPage() {
   const handleTableSelect = (tableId: number) => {
     setSelectedTableId(tableId);
     const table = tables?.find(t => t.id === tableId);
-    if (table?.status === 'libre') {
+    if (table?.status === 'libre' && (table.order || []).length === 0) {
       setMenuModalOpen(true);
     }
   };
@@ -126,7 +126,7 @@ export default function WaiterPage() {
         if (!table.order) table.order = [];
         table.order.push(newOrderItem);
         
-        if (table.status === 'libre') {
+        if (table.status === 'libre' && table.id !== 99) {
           table.status = 'ocupada';
         }
 
@@ -167,7 +167,7 @@ export default function WaiterPage() {
         const tableToUpdate = newTables[tableIndex];
         tableToUpdate.order = (tableToUpdate.order || []).filter((i: OrderItem) => i.id !== itemId);
         
-        if (tableToUpdate.order.length === 0 && tableToUpdate.status !== 'esperando_cuenta') {
+        if (tableToUpdate.order.length === 0 && tableToUpdate.status !== 'esperando_cuenta' && tableToUpdate.id !== 99) {
           tableToUpdate.status = 'libre';
         }
         
@@ -271,7 +271,7 @@ export default function WaiterPage() {
       await updateTables(currentTables => {
         const newTables = JSON.parse(JSON.stringify(currentTables || []));
         const tableIndex = newTables.findIndex((t: Table) => t.id === selectedTableId);
-        if (tableIndex !== -1) {
+        if (tableIndex !== -1 && newTables[tableIndex].id !== 99) {
             newTables[tableIndex].status = 'esperando_cuenta';
         }
         return newTables;
@@ -548,18 +548,27 @@ export default function WaiterPage() {
           <div className="grid grid-cols-5 gap-2 max-w-lg mx-auto">
               {tables && tables.sort((a,b) => a.id - b.id).map(table => {
                   const isFoodReady = (table.order || []).some(item => item.status === 'listo_servir');
+                  const isTakeaway = !!table.name;
+                  const hasOrders = (table.order || []).length > 0;
+                  const displayStatus = isTakeaway && hasOrders ? 'ocupada' : table.status;
+                  
                   return (
                       <button
                           key={table.id}
                           onClick={() => handleTableSelect(table.id)}
                           className={cn(
                               "relative flex flex-col items-center justify-center rounded-lg shadow-md text-white font-bold transition-all duration-200 aspect-square",
-                              tableStatusConfig[table.status].color,
+                              isTakeaway ? (hasOrders ? 'bg-sky-600 hover:bg-sky-600/90' : 'bg-sky-500 hover:bg-sky-500/90') : tableStatusConfig[displayStatus].color,
                               selectedTableId === table.id ? "ring-4 ring-offset-2 ring-primary ring-offset-background" : "ring-0"
                           )}
                       >
-                          <span className="text-2xl font-extrabold">{table.id}</span>
-                          <span className="text-xs text-center font-semibold uppercase tracking-wider px-1">{tableStatusConfig[table.status].text}</span>
+                          {isTakeaway ? 
+                            <Package className="h-7 w-7 mb-1" /> :
+                            <span className="text-2xl font-extrabold">{table.id}</span>
+                          }
+                          <span className="text-xs text-center font-semibold uppercase tracking-wider px-1">
+                            {isTakeaway ? table.name : tableStatusConfig[displayStatus].text}
+                          </span>
                           {isFoodReady && (
                               <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 h-6 w-6 flex items-center justify-center text-xs font-bold animate-bounce">
                                   <ChefHat size={14} />
@@ -575,7 +584,7 @@ export default function WaiterPage() {
           {selectedTable ? (
             <Card className="flex flex-col h-full w-full rounded-none border-0 shadow-none bg-background">
               <CardHeader className="border-b">
-                  <CardTitle className="text-2xl">Comanda Mesa #{selectedTable.id}</CardTitle>
+                  <CardTitle className="text-2xl">Comanda {selectedTable.name ? selectedTable.name : `Mesa #${selectedTable.id}`}</CardTitle>
               </CardHeader>
               <CardContent className="flex-1 p-0 min-h-0">
                   <ScrollArea className="h-full">

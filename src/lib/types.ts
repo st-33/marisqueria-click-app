@@ -19,6 +19,7 @@ export interface Table {
   id: number;
   status: TableStatus;
   order: OrderItem[];
+  name?: string;
 }
 
 export interface VariantOption {

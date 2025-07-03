@@ -1,0 +1,211 @@
+
+{
+  "access_codes": {
+    "PUERTO-24": "marisqueria-puerto-libres",
+    "PERLA-24": "marisqueria-la-perla",
+    "DIONICIOS-24": "marisqueria-dionicios-jr"
+  },
+  "restaurantes": {
+    "marisqueria-puerto-libres": {
+      "features": {
+        "analytics_dashboard": true,
+        "inventory_management": true,
+        "pin_security": true
+      },
+      "pin": "1234",
+      "tables": [
+        { "id": 1, "status": "libre", "order": [] },
+        { "id": 2, "status": "libre", "order": [] },
+        { "id": 3, "status": "libre", "order": [] },
+        { "id": 4, "status": "libre", "order": [] },
+        { "id": 5, "status": "libre", "order": [] },
+        { "id": 6, "status": "libre", "order": [] },
+        { "id": 7, "status": "libre", "order": [] },
+        { "id": 8, "status": "libre", "order": [] },
+        { "id": 99, "status": "libre", "order": [], "name": "Para Llevar" }
+      ],
+      "menu": {
+        "platillos": [
+          {
+            "id": "coctel-1", "name": "Cóctel", "price": 70,
+            "description": "Refrescante cóctel con ingredientes frescos y un toque de la casa.",
+            "variantPrices": { "Mediano": 50, "Grande": 80 },
+            "variants": [
+              { "type": "Tamaño", "options": ["Chico", "Mediano", "Grande"], "isRequired": true },
+              { "type": "Tipo", "options": ["Camarón", "Pulpo", "Ostión", "Campechano"], "isRequired": true },
+              { "type": "S/N", "options": ["Cebolla", "Cilantro", "Picante"], "allowMultiple": true }
+            ]
+          },
+          {
+            "id": "mojarra-2", "name": "Mojarra", "price": 165, "recipe": [],
+            "description": "Mojarra frita entera, servida a tu gusto.",
+            "variants": [
+              { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "A la mexicana"], "isRequired": true }
+            ]
+          },
+          {
+            "id": "filete-3", "name": "Filete", "price": 165,
+            "description": "Suave filete de pescado, preparado a tu elección.",
+            "variants": [
+              { "type": "Porción", "options": ["Orden Completa", "Media Orden"], "isRequired": true },
+              { "type": "Estilo", "options": ["Empanizado", "A la Diabla", "A la Mexicana", "Al Mojo de Ajo", "Enchipotlado"], "isRequired": true },
+              { "type": "S/N", "options": ["Sin Jitomate", "Sin Pepino", "Sin Aguacate", "Sin Lechuga"], "allowMultiple": true }
+            ],
+            "variantPrices": { "Media Orden": -65 }
+          },
+          {
+            "id": "filete-relleno-4", "name": "Filete Empapelado Relleno", "price": 175,
+            "description": "Exquisito filete empapelado y relleno de mariscos.",
+            "variants": [
+              { "type": "S/N", "options": ["Sin Jitomate", "Sin Pepino", "Sin Aguacate", "Sin Lechuga"], "allowMultiple": true }
+            ]
+          },
+          {
+            "id": "caldo-pelar-5", "name": "Caldo para Pelar", "price": 135,
+            "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
+            "variantPrices": { "Media Orden": -45 }
+          },
+           {
+            "id": "caldo-filete-6", "name": "Caldo de Filete", "price": 130,
+            "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
+            "variantPrices": { "Media Orden": -40 }
+          },
+           {
+            "id": "caldo-mixto-7", "name": "Caldo Mixto", "price": 145,
+            "variants": [
+                { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
+                { "type": "S/N", "options": ["Sin Jaiba", "Sin Pulpo"], "allowMultiple": true }
+            ],
+            "variantPrices": { "Media Orden": -55 }
+          },
+           {
+            "id": "caldo-pescado-8", "name": "Caldo de Pescado", "price": 135,
+            "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
+            "variantPrices": { "Media Orden": -45 }
+          },
+           {
+            "id": "sopa-mariscos-9", "name": "Sopa de Mariscos", "price": 150,
+            "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
+            "variantPrices": { "Media Orden": -60 }
+          },
+          {
+            "id": "camarones-pelar-10", "name": "Camarones para Pelar", "price": 135,
+            "variants": [
+                { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
+                { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "Empanizados", "Enchipotlados"], "isRequired": true }
+            ],
+            "variantPrices": { "Media Orden": -45 }
+          },
+           {
+            "id": "camarones-pelados-11", "name": "Camarones Pelados", "price": 140,
+            "variants": [
+                { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
+                { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "Empanizados", "Enchipotlados"], "isRequired": true }
+            ],
+            "variantPrices": { "Media Orden": -50 }
+          },
+          {
+            "id": "camarones-mixtos-12", "name": "Camarones Mixtos", "price": 175, "isMixto": true,
+            "description": "Elige dos de nuestras preparaciones especiales. Puedes combinar camarón y pulpo.",
+            "variants": [
+              { "type": "Preparación", "options": ["Al mojo de ajo", "A la diabla", "Enchipotlados", "Empanizados"], "isRequired": true, "isDobleSeleccion": true },
+              { "type": "Proteína", "options": ["Camarón Pelado", "Pulpo"], "isRequired": true }
+            ]
+          },
+          {
+            "id": "camarones-coco-13", "name": "Camarones Coco", "price": 165,
+            "variants": [{ "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true }],
+            "variantPrices": { "Media Orden": -75 }
+          },
+          {
+            "id": "pulpo-14", "name": "Pulpo", "price": 135,
+            "variants": [
+                { "type": "Porción", "options": ["Completa", "Media Orden"], "isRequired": true },
+                { "type": "Estilo", "options": ["Al mojo de ajo", "A la diabla", "Enchipotlado", "A la mexicana", "Encebollado"], "isRequired": true }
+            ],
+            "variantPrices": { "Media Orden": -45 }
+          },
+          { "id": "ensalada-mariscos-15", "name": "Ensalada de Mariscos", "price": 150, "variants": [] },
+          { "id": "ensalada-camaron-pescado-16", "name": "Ensalada de Camarón y Pescado", "price": 150, "variants": [] },
+          { "id": "tostada-camaron-17", "name": "Tostada de Camarón", "price": 40, "variants": [] },
+          { "id": "tostada-pescado-18", "name": "Tostada de Pescado", "price": 40, "variants": [] },
+          { "id": "empanada-camaron-19", "name": "Empanada de Camarón", "price": 35, "variants": [] },
+          { "id": "empanada-pescado-20", "name": "Empanada de Pescado", "price": 35, "variants": [] }
+        ],
+        "bebidas_postres": [
+          { 
+            "id": "refrescos-1", "name": "Refresco", "price": 20, "description": "Refrescos de 355ml.",
+            "variants": [{ "type": "Sabor", "options": ["Pepsi", "Fanta", "Squirt", "Guayaba", "Mango", "Uva"], "isRequired": true }] 
+          },
+          { "id": "coca-cola-vidrio-2", "name": "Coca-Cola Vidrio", "price": 30, "description": "Coca-Cola de vidrio 355ml.", "variants": [] },
+          { 
+            "id": "cerveza-nacional-3", "name": "Cerveza", "price": 25, "description": "Cerveza nacional 355ml.",
+            "variants": [{ "type": "Marca", "options": ["Indio", "Corona", "Tecate", "Victoria", "XX Lager"], "isRequired": true }]
+          },
+          { "id": "michelada-4", "name": "Michelada", "price": 45, "description": "Tu cerveza preparada con sal, limón y salsas.", "variants": [] },
+          { "id": "michelada-camaron-5", "name": "Michelada con Camarones", "price": 100, "description": "La michelada de la casa con camarones frescos.", "variants": [] },
+          { "id": "limonada-rusa-6", "name": "Limonada o Rusa", "price": 35, "description": "Agua mineral preparada o limonada fresca.", "variants": [] },
+          { "id": "jarra-agua-7", "name": "Jarra de Agua de Limón", "price": 70, "description": "Jarra de agua de limón fresca de 1.5 litros.", "variants": [] },
+          { "id": "cafe-8", "name": "Café", "price": 20, "variants": [] },
+          { "id": "te-9", "name": "Té", "price": 20, "variants": [] },
+          { "id": "flan-napolitano-10", "name": "Flan Napolitano", "price": 35, "description": "El flan cremoso de la casa.", "variants": [] },
+          { 
+            "id": "duraznos-11", "name": "Duraznos", "price": 35, 
+            "description": "Duraznos en almíbar servidos con crema o rompope.",
+            "variants": [
+                { "type": "Con", "options": ["Crema", "Rompope"], "isRequired": true}
+            ]
+          }
+        ]
+      },
+      "completed_orders": [
+        {
+          "id": "order-yesterday-1", "tableId": 2, "total": 350.50,
+          "date": "2024-07-28T14:30:00Z",
+          "order": [
+            { "id": "tostada-2-1", "name": "Tostada", "price": 55, "qty": 2, "status": "entregado", "variants": ["Mixta"], "category": "platillos", "menuItemId": "tostada-2" },
+            { "id": "filete-4-1", "name": "Filetes", "price": 200, "qty": 1, "status": "entregado", "variants": ["Empapelado", "Papas Fritas"], "category": "platillos", "menuItemId": "filetes-4" },
+            { "id": "refresco-1-1", "name": "Refresco", "price": 25, "qty": 2, "status": "entregado", "variants": ["Coca-Cola"], "category": "bebidas_postres", "menuItemId": "refrescos-1" }
+          ]
+        },
+         {
+          "id": "order-yesterday-2", "tableId": 5, "total": 185.00,
+          "date": "2024-07-28T19:00:00Z",
+          "order": [
+            { "id": "coctel-1-2", "name": "Cóctel", "price": 155, "qty": 1, "status": "entregado", "variants": ["Grande", "Campechano"], "category": "platillos", "menuItemId": "coctel-de-mariscos-1" },
+            { "id": "cerveza-3-2", "name": "Cerveza Nacional", "price": 30, "qty": 1, "status": "entregado", "variants": ["Corona"], "category": "bebidas_postres", "menuItemId": "cerveza-nacional-3" }
+          ]
+        }
+      ],
+      "inventory": [
+        { "id": "camaron-1", "name": "Camarón", "stock": 10, "unit": "kg", "lowStockThreshold": 2 },
+        { "id": "pulpo-2", "name": "Pulpo", "stock": 8, "unit": "kg", "lowStockThreshold": 1.5 },
+        { "id": "pescado-3", "name": "Filete de Pescado", "stock": 15, "unit": "kg", "lowStockThreshold": 3 },
+        { "id": "tomate-4", "name": "Tomate", "stock": 5, "unit": "kg", "lowStockThreshold": 1 },
+        { "id": "cebolla-5", "name": "Cebolla", "stock": 5, "unit": "kg", "lowStockThreshold": 1 }
+      ]
+    },
+    "marisqueria-la-perla": {
+      "features": {
+        "analytics_dashboard": true,
+        "inventory_management": false,
+        "pin_security": false
+      },
+      "tables": [],
+      "menu": { "platillos": [], "bebidas_postres": [] },
+      "completed_orders": [],
+      "inventory": []
+    },
+    "marisqueria-dionicios-jr": {
+       "features": {
+        "analytics_dashboard": false,
+        "inventory_management": false,
+        "pin_security": false
+      },
+      "tables": [],
+      "menu": { "platillos": [], "bebidas_postres": [] },
+      "completed_orders": [],
+      "inventory": []
+    }
+  }
+}
