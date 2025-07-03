@@ -83,22 +83,30 @@ export default function KitchenPage() {
 
   const renderVariants = (variants: string[]) => {
     if (!variants || variants.length === 0) return null;
-    
+
     const isMixto = variants.some(v => v.startsWith('Prep'));
-    
+
     if (isMixto) {
       return (
-        <div className="text-lg text-muted-foreground mt-2 space-y-1">
-          {variants.map((variant, index) => (
-            <div key={index} className="pl-2">
-              <span className="font-bold">{variant.split(':')[0]}:</span>
-              <span>{variant.split(':')[1]}</span>
-            </div>
-          ))}
+        <div className="text-muted-foreground mt-2 space-y-2">
+          {variants.map((variant, index) => {
+            const [prep, details] = variant.split(/:\s*/);
+            const detailItems = details ? details.split(', ') : [];
+            return (
+              <div key={index}>
+                <p className="font-semibold text-lg">{prep}:</p>
+                <ul className="list-disc list-inside pl-4 text-base">
+                  {detailItems.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
         </div>
       );
     }
-    
+
     return (
       <p className="text-lg text-muted-foreground mt-1">
         ({variants.join(', ')})
