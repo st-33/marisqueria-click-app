@@ -11,7 +11,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, Plus, Sparkles, X, Package, Eye, BookText, ChevronsUpDown, GitBranchPlus, Combine, Lightbulb, ChefHat, ShieldCheck, History } from 'lucide-react';
+import { Pencil, Trash2, Plus, Sparkles, X, Package, Eye, BookText, ChevronsUpDown, GitBranchPlus, Combine, Lightbulb, ChefHat, ShieldCheck, History, LayoutDashboard, Utensils, Warehouse, Table as TableIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import useRealtimeData from '@/hooks/useRealtimeData';
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +59,7 @@ import { BackButton } from '@/components/app/BackButton';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const PinModal = ({
     isOpen,
@@ -141,7 +142,7 @@ const DailySpecial = ({ menu, inventory, isLoading }: { menu: Menu, inventory: I
     }
 
     return (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg h-full flex flex-col">
             <CardHeader>
                 <CardTitle className="flex items-center">
                     <Lightbulb className="mr-2 h-5 w-5 text-accent" />
@@ -151,9 +152,9 @@ const DailySpecial = ({ menu, inventory, isLoading }: { menu: Menu, inventory: I
                     Genera una sugerencia estratégica para promocionar un platillo.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 flex-grow">
                 {isGenerating ? (
-                    <div className="flex items-center justify-center h-24">
+                    <div className="flex items-center justify-center h-full">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                 ) : special ? (
@@ -163,7 +164,7 @@ const DailySpecial = ({ menu, inventory, isLoading }: { menu: Menu, inventory: I
                         <p className="text-xs text-muted-foreground"><span className="font-semibold">Razón (Interna):</span> {special.reason}</p>
                     </div>
                 ) : (
-                    <div className="text-center text-muted-foreground py-4">
+                    <div className="text-center text-muted-foreground py-4 h-full flex flex-col justify-center items-center">
                         <p>Haz clic en "Generar" para obtener una sugerencia.</p>
                     </div>
                 )}
@@ -403,9 +404,12 @@ const menuItemSchema = z.object({
   variantPrices: z.string().optional().refine((val) => {
     if (!val || val.trim() === "" || val.trim() === "{}") return true;
     try {
+      // Intenta parsear el string como JSON
       const parsed = JSON.parse(val);
+      // Asegura que sea un objeto, no un array o null
       return typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null;
     } catch (e) {
+      // Si el parseo falla, no es un JSON válido
       return false;
     }
   }, { message: 'Debe ser un objeto JSON válido, ej: {"Queso Extra": 20}' }),
@@ -462,7 +466,7 @@ export default function AdminPage() {
   const inventory = restaurantData?.inventory || initialInventory;
   const features = restaurantData?.features;
   const pin = restaurantData?.pin;
-  const isConnected = !!restaurantData; // Simplified connection check
+  const isConnected = !!restaurantData;
   const dataLoading = restaurantDataLoading;
 
   const [itemToDelete, setItemToDelete] = React.useState<{ id: string; category: keyof Menu } | null>(null);
@@ -838,6 +842,13 @@ export default function AdminPage() {
       setItemModalOpen(true);
     }
   };
+  
+  const availableTabs: string[] = [];
+  if (features?.analytics_dashboard) availableTabs.push('dashboard');
+  availableTabs.push('menu');
+  if (features?.inventory_management) availableTabs.push('inventory');
+  availableTabs.push('tables');
+  const defaultTab = availableTabs[0] || 'menu';
 
   if (dataLoading) {
     return (
@@ -867,144 +878,33 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-3 gap-8">
-            <div className="xl:col-span-1 space-y-8">
-              {features?.analytics_dashboard && <DailySpecial menu={sanitizedMenu} inventory={inventory || []} isLoading={dataLoading} />}
-              
-              {features?.analytics_dashboard && <SalesAnalytics orders={completedOrders} isLoading={dataLoading} />}
-
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Estadísticas de Mesas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                   {dataLoading ? (
-                    <>
-                      <Skeleton className="h-[72px] w-full" />
-                      <Skeleton className="h-[72px] w-full" />
-                      <Skeleton className="h-[72px] w-full" />
-                    </>
-                  ) : (
-                    <>
-                      <div className="bg-[hsl(var(--chart-2))]/20 p-4 rounded-lg flex justify-between items-center">
-                        <span className="text-lg text-[hsl(var(--chart-2))] font-semibold">Mesas Libres</span>
-                        <span className="text-3xl font-bold text-[hsl(var(--chart-2))]">{tableStats.libre}</span>
-                      </div>
-                      <div className="bg-destructive/10 p-4 rounded-lg flex justify-between items-center">
-                        <span className="text-lg text-destructive font-semibold">Mesas Ocupadas</span>
-                        <span className="text-3xl font-bold text-destructive">{tableStats.ocupada}</span>
-                      </div>
-                      <div className="bg-accent/20 p-4 rounded-lg flex justify-between items-center">
-                        <span className="text-lg text-accent font-semibold">Esperando Cuenta</span>
-                        <span className="text-3xl font-bold text-accent">{tableStats.esperando_cuenta}</span>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Gestionar Mesas</CardTitle>
-                        <CardDescription>Click en una mesa para ver su historial.</CardDescription>
-                    </div>
-                  <Button onClick={handleAddTable} size="sm" disabled={dataLoading}>
-                      <Plus className="mr-2 h-4 w-4" /> Agregar
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">Solo puedes eliminar mesas que estén libres.</p>
-                  <ScrollArea className="h-40">
-                     {dataLoading ? (
-                      <div className="grid grid-cols-5 gap-3 pr-2">
-                        {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="aspect-square w-full" />)}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-5 gap-3 pr-2">
-                        {tables && [...tables].sort((a,b) => a.id - b.id).map(table => (
-                          <div key={table.id} className="relative group">
-                             <Button
-                              variant="outline"
-                              className="aspect-square w-full h-auto text-xl font-bold text-secondary-foreground hover:bg-accent/50 focus:ring-2 focus:ring-primary"
-                              onClick={() => handleViewTableHistory(table.id)}
-                            >
-                              {table.id}
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
-                              onClick={() => confirmDeleteTable(table)}
-                              disabled={table.status !== 'libre'}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-
-            </div>
-
-            <div className="xl:col-span-2 space-y-8">
-              {features?.inventory_management && <Card className="shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Gestión de Inventario</CardTitle>
-                    <CardDescription>Controla el stock de tus ingredientes.</CardDescription>
+          <Tabs defaultValue={defaultTab} className="max-w-7xl mx-auto">
+            <TabsList className={cn("grid w-full h-auto mb-6", `grid-cols-${availableTabs.length}`)}>
+              {features?.analytics_dashboard && (
+                <TabsTrigger value="dashboard"><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard</TabsTrigger>
+              )}
+              <TabsTrigger value="menu"><Utensils className="mr-2 h-4 w-4" />Menú</TabsTrigger>
+              {features?.inventory_management && (
+                <TabsTrigger value="inventory"><Warehouse className="mr-2 h-4 w-4" />Inventario</TabsTrigger>
+              )}
+              <TabsTrigger value="tables"><TableIcon className="mr-2 h-4 w-4" />Mesas</TabsTrigger>
+            </TabsList>
+            
+            {features?.analytics_dashboard && (
+              <TabsContent value="dashboard">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2">
+                     <SalesAnalytics orders={completedOrders} isLoading={dataLoading} />
                   </div>
-                  <Button onClick={openAddInventoryItemModal} disabled={dataLoading}>
-                      <Package className="mr-2 h-4 w-4" /> Agregar Ingrediente
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-64">
-                    <UiTable>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Ingrediente</TableHead>
-                          <TableHead className="text-right">Stock</TableHead>
-                          <TableHead className="text-right">Umbral Bajo</TableHead>
-                          <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dataLoading ? (
-                           Array.from({ length: 5 }).map((_, i) => (
-                            <TableRow key={i}>
-                              <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                              <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-                              <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
-                              <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
-                            </TableRow>
-                          ))
-                        ) : (inventory || []).length > 0 ? (inventory || []).map(item => (
-                          <TableRow key={item.id} className={item.stock <= item.lowStockThreshold ? 'bg-destructive/10' : ''}>
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell className="text-right">{item.stock} {item.unit}</TableCell>
-                            <TableCell className="text-right">{item.lowStockThreshold} {item.unit}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="icon" onClick={() => openEditInventoryItemModal(item)}><Pencil className="h-4 w-4"/></Button>
-                            </TableCell>
-                          </TableRow>
-                        )) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
-                              Aún no hay ingredientes en el inventario.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </UiTable>
-                  </ScrollArea>
-                </CardContent>
-              </Card>}
+                  <div className="lg:col-span-1">
+                     <DailySpecial menu={sanitizedMenu} inventory={inventory || []} isLoading={dataLoading} />
+                  </div>
+                </div>
+              </TabsContent>
+            )}
 
-              <Card className="shadow-lg">
+            <TabsContent value="menu">
+               <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Gestión de Menú</CardTitle>
@@ -1060,8 +960,144 @@ export default function AdminPage() {
                   </ScrollArea>
                 </CardContent>
               </Card>
-            </div>
-          </div>
+            </TabsContent>
+            
+            {features?.inventory_management && (
+              <TabsContent value="inventory">
+                <Card className="shadow-lg">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Gestión de Inventario</CardTitle>
+                      <CardDescription>Controla el stock de tus ingredientes.</CardDescription>
+                    </div>
+                    <Button onClick={openAddInventoryItemModal} disabled={dataLoading}>
+                        <Package className="mr-2 h-4 w-4" /> Agregar Ingrediente
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-64">
+                      <UiTable>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Ingrediente</TableHead>
+                            <TableHead className="text-right">Stock</TableHead>
+                            <TableHead className="text-right">Umbral Bajo</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dataLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                              <TableRow key={i}>
+                                <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                              </TableRow>
+                            ))
+                          ) : (inventory || []).length > 0 ? (inventory || []).map(item => (
+                            <TableRow key={item.id} className={item.stock <= item.lowStockThreshold ? 'bg-destructive/10' : ''}>
+                              <TableCell className="font-medium">{item.name}</TableCell>
+                              <TableCell className="text-right">{item.stock} {item.unit}</TableCell>
+                              <TableCell className="text-right">{item.lowStockThreshold} {item.unit}</TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => openEditInventoryItemModal(item)}><Pencil className="h-4 w-4"/></Button>
+                              </TableCell>
+                            </TableRow>
+                          )) : (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
+                                Aún no hay ingredientes en el inventario.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </UiTable>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            <TabsContent value="tables">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <Card className="shadow-lg">
+                    <CardHeader>
+                      <CardTitle>Estadísticas de Mesas</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {dataLoading ? (
+                        <>
+                          <Skeleton className="h-[72px] w-full" />
+                          <Skeleton className="h-[72px] w-full" />
+                          <Skeleton className="h-[72px] w-full" />
+                        </>
+                      ) : (
+                        <>
+                          <div className="bg-[hsl(var(--chart-2))]/20 p-4 rounded-lg flex justify-between items-center">
+                            <span className="text-lg text-[hsl(var(--chart-2))] font-semibold">Mesas Libres</span>
+                            <span className="text-3xl font-bold text-[hsl(var(--chart-2))]">{tableStats.libre}</span>
+                          </div>
+                          <div className="bg-destructive/10 p-4 rounded-lg flex justify-between items-center">
+                            <span className="text-lg text-destructive font-semibold">Mesas Ocupadas</span>
+                            <span className="text-3xl font-bold text-destructive">{tableStats.ocupada}</span>
+                          </div>
+                          <div className="bg-accent/20 p-4 rounded-lg flex justify-between items-center">
+                            <span className="text-lg text-accent font-semibold">Esperando Cuenta</span>
+                            <span className="text-3xl font-bold text-accent">{tableStats.esperando_cuenta}</span>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="shadow-lg">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Gestionar Mesas</CardTitle>
+                            <CardDescription>Click en una mesa para ver su historial.</CardDescription>
+                        </div>
+                      <Button onClick={handleAddTable} size="sm" disabled={dataLoading}>
+                          <Plus className="mr-2 h-4 w-4" /> Agregar
+                      </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-4">Solo puedes eliminar mesas que estén libres.</p>
+                      <ScrollArea className="h-40">
+                        {dataLoading ? (
+                          <div className="grid grid-cols-5 gap-3 pr-2">
+                            {Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="aspect-square w-full" />)}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-5 gap-3 pr-2">
+                            {tables && [...tables].sort((a,b) => a.id - b.id).map(table => (
+                              <div key={table.id} className="relative group">
+                                <Button
+                                  variant="outline"
+                                  className="aspect-square w-full h-auto text-xl font-bold text-secondary-foreground hover:bg-accent/50 focus:ring-2 focus:ring-primary"
+                                  onClick={() => handleViewTableHistory(table.id)}
+                                >
+                                  {table.id}
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
+                                  onClick={() => confirmDeleteTable(table)}
+                                  disabled={table.status !== 'libre'}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+               </div>
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
 
