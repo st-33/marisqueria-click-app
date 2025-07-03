@@ -5,7 +5,7 @@ import * as React from 'react';
 import type { Table, OrderItem, MenuItem, TableStatus, Menu, CompletedOrder, OrderItemStatus, InventoryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package, Timer as TimerIcon, Square } from 'lucide-react';
+import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package, Timer as TimerIcon, Square, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MenuModal } from '@/components/app/MenuModal';
 import { AccountModal } from '@/components/app/AccountModal';
@@ -207,6 +207,26 @@ export default function WaiterPage() {
       toast({ title: "Producto Eliminado", description: "El producto ha sido eliminado de la comanda." });
     } catch(error: any) {
        toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const incrementOrderItemQty = async (itemId: string) => {
+    if (!selectedTableId) return;
+    try {
+        await updateTables(currentTables => {
+            const newTables = JSON.parse(JSON.stringify(currentTables || []));
+            const tableIndex = newTables.findIndex((t: Table) => t.id === selectedTableId);
+            if (tableIndex === -1) return newTables;
+
+            const tableToUpdate = newTables[tableIndex];
+            const itemToUpdate = (tableToUpdate.order || []).find((i: OrderItem) => i.id === itemId);
+            if (itemToUpdate) {
+                itemToUpdate.qty += 1;
+            }
+            return newTables;
+        });
+    } catch (error: any) {
+        toast({ title: "Error al agregar", description: error.message, variant: "destructive" });
     }
   };
 
@@ -578,9 +598,30 @@ export default function WaiterPage() {
                                         const originalMenuItem = menuItems.find(mi => mi.id === item.menuItemId);
                                         const isVariablePrice = originalMenuItem ? originalMenuItem.price === 0 : false;
                                       return (
-                                        <div key={item.id} className="flex items-center gap-2 bg-secondary p-3 rounded-lg shadow-sm transition-transform hover:scale-[1.01]">
+                                        <div key={item.id} className="flex items-center gap-2 bg-secondary p-3 rounded-lg shadow-sm">
                                           <div className="flex flex-1 items-center gap-3 min-w-0">
-                                              <span className="font-bold text-lg text-foreground">{item.qty}x</span>
+                                              <div className="flex items-center gap-1">
+                                                <span className="font-bold text-lg text-foreground">{item.qty}x</span>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-primary"
+                                                            onClick={() => incrementOrderItemQty(item.id)}
+                                                            disabled={item.status !== 'nueva'}
+                                                        >
+                                                            <PlusCircle className="h-5 w-5" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        {item.status === 'nueva' 
+                                                            ? <p>Agregar uno más</p>
+                                                            : <p>No se puede modificar un item procesado</p>
+                                                        }
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                              </div>
                                               <div className="flex-grow min-w-0">
                                                 <span className="font-semibold text-foreground leading-tight block">{item.name}</span>
                                                 {renderVariants(item.variants)}
