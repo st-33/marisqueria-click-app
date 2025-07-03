@@ -37,23 +37,25 @@ const prompt = ai.definePrompt({
   name: 'parseVoiceOrderPrompt',
   input: {schema: ParseVoiceOrderInputSchema},
   output: {schema: ParseVoiceOrderOutputSchema},
-  prompt: `Eres un sistema experto en tomar órdenes para un restaurante de mariscos mexicano. Tu tarea es analizar la transcripción de una orden hablada por un mesero y convertirla en un formato JSON estructurado.
+  prompt: `Eres un sistema experto de punto de venta para un restaurante de mariscos mexicano. Tu tarea es analizar la transcripción de una orden hablada por un mesero y convertirla en un formato JSON estructurado.
 
-Se te proporcionará el menú completo del restaurante en formato JSON. DEBES usar los nombres y variantes EXACTAMENTE como aparecen en el menú para que el sistema los reconozca.
+**Reglas Críticas:**
+1.  **Exactitud Absoluta:** DEBES usar los nombres de platillos y variantes EXACTAMENTE como aparecen en el menú JSON proporcionado. Si un platillo o variante no existe, no lo inventes.
+2.  **Validación Estricta:** Las variantes que identifiques DEBEN pertenecer al platillo con el que las asocias. Por ejemplo, si la orden dice "Tostada de Res" pero "Res" no es una variante de "Tostada", no debes procesar ese ítem.
+3.  **Cantidades:** Interpreta cantidades numéricas ('dos', 'una', 'un', 'tres', etc.) y asócialas con los platillos correctos. Si no se menciona cantidad, asume que es 1.
+4.  **Manejo de Ambigüedad:** Si la orden es ambigua o no puedes identificar con certeza un platillo del menú, es MEJOR NO INCLUIRLO en la respuesta a incluir algo incorrecto. Devuelve un arreglo de 'items' vacío si no estás seguro.
+5.  **Variantes Obligatorias:** Si un platillo requiere una variante obligatoria (ej. 'Tamaño' para un 'Cóctel') y no se especifica en la orden, no incluyas el platillo. No asumas ni infieras variantes obligatorias.
 
-La orden del mesero está en español. Interpreta cantidades numéricas ('dos', 'una', 'un', 'tres', 'cuatro', etc.) y asócialas con los platillos correctos.
+**Ejemplo de la lógica a seguir:**
+- Orden: "mándame dos tostadas de ceviche y una coca"
+- Menú tiene: \`Platillo: "Tostada", Variantes: ["Ceviche", ...]\` y \`Bebida: "Refresco", Variantes: ["Coca-Cola", ...]\`
+- Tu Salida Correcta: \`items: [{ qty: 2, name: "Tostada", variants: ["Ceviche"] }, { qty: 1, name: "Refresco", variants: ["Coca-Cola"] }]\`
 
-Ejemplo: si la orden es "mándame dos tostadas de ceviche y una coca", y el menú tiene un platillo "Tostada" con una variante de "Relleno" que incluye "Ceviche", y una bebida "Refresco" con una variante de "Sabor" que incluye "Coca-Cola", tu salida debería identificar correctamente:
-- 1 item: { qty: 2, name: "Tostada", variants: ["Ceviche"] }
-- 2 item: { qty: 1, name: "Refresco", variants: ["Coca-Cola"] }
-
-Si no se especifican variantes obligatorias, intenta inferir la más común o la única disponible. Si la orden es ambigua, haz tu mejor esfuerzo para interpretarla basándote en el menú.
-
-Aquí están los datos:
+**Datos para procesar:**
 La transcripción de la orden del mesero es: {{{transcript}}}
 El menú del restaurante es: {{{menuJson}}}
 
-Responde ÚNICAMENTE con el objeto JSON estructurado que se te especificó en el esquema de salida. No incluyas texto adicional, explicaciones o disculpas.`,
+Responde ÚNICAMENTE con el objeto JSON estructurado que se te especificó en el esquema de salida. No incluyas texto adicional, explicaciones o disculpas. Si no encuentras ningún platillo válido, responde con \`{"items": []}\`.`,
 });
 
 const parseVoiceOrderFlow = ai.defineFlow(
