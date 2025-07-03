@@ -11,7 +11,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, Plus, Sparkles, X, Archive, Database, RefreshCcw, Package, Eye, PieChart as PieChartIcon, BarChart as BarChartIcon, BookText, ChevronsUpDown, GitBranchPlus, Combine, Share2, Lightbulb, ChefHat, ShieldCheck } from 'lucide-react';
+import { Pencil, Trash2, Plus, Sparkles, X, Package, Eye, BookText, ChevronsUpDown, GitBranchPlus, Combine, Lightbulb, ChefHat, ShieldCheck } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import useRealtimeData from '@/hooks/useRealtimeData';
 import { useToast } from "@/hooks/use-toast";
@@ -43,7 +43,7 @@ import { getDishDescriptionAction, getDailySpecialAction } from '../../actions';
 import type { GenerateDailySpecialOutput } from '@/ai/flows/generate-daily-special';
 import { ConnectionStatus } from '@/components/app/ConnectionStatus';
 import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
@@ -459,7 +459,7 @@ const menuItemSchema = z.object({
     } catch (e) {
       return false;
     }
-  }, { message: "Debe ser un objeto JSON válido, ej: {\"Queso Extra\": 20}" }),
+  }, { message: 'Debe ser un objeto JSON válido, ej: {"Queso Extra": 20}' }),
   disableRules: z.array(z.object({
     when: z.string().min(1, "La opción 'Cuando' es requerida."),
     disable: z.array(z.string()).min(1, "Debes seleccionar al menos una opción para deshabilitar."),
@@ -521,7 +521,6 @@ export default function AdminPage() {
   const [isItemModalOpen, setItemModalOpen] = React.useState(false);
   const [editingMenuItem, setEditingMenuItem] = React.useState<MenuItem | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
-  const [isResetDialogOpen, setResetDialogOpen] = React.useState(false);
   const [isInventoryModalOpen, setInventoryModalOpen] = React.useState(false);
   const [editingInventoryItem, setEditingInventoryItem] = React.useState<InventoryItem | null>(null);
   const [isPinVerified, setPinVerified] = React.useState(false);
@@ -818,28 +817,6 @@ export default function AdminPage() {
       }
   };
   
-  const handleSystemReset = async () => {
-    try {
-      await updateRestaurantData(currentData => {
-          if (!currentData) throw new Error("No data to update");
-          currentData.tables = initialTables;
-          currentData.menu = initialMenu;
-          currentData.inventory = initialInventory;
-          currentData.completed_orders = initialCompletedOrders;
-          return currentData;
-      });
-      
-      toast({
-          title: "Restaurante Reiniciado",
-          description: "Sistema reiniciado. Se cargaron los datos de ejemplo, incluyendo un historial de ventas para demostración.",
-      });
-    } catch (error: any) {
-       toast({ title: "Error al Reiniciar", description: error.message, variant: "destructive" });
-    } finally {
-       setResetDialogOpen(false);
-    }
-  };
-
   const openAddInventoryItemModal = () => {
     setEditingInventoryItem(null);
     inventoryForm.reset({ name: "", stock: 0, unit: "pz", lowStockThreshold: 0});
@@ -925,25 +902,6 @@ export default function AdminPage() {
               {features?.analytics_dashboard && <DailySpecial menu={sanitizedMenu} inventory={inventory || []} isLoading={dataLoading} />}
               
               {features?.analytics_dashboard && <SalesAnalytics orders={completedOrders} isLoading={dataLoading} />}
-
-              <Card className="shadow-lg border-destructive/50">
-                <CardHeader>
-                  <CardTitle>Acciones del Sistema</CardTitle>
-                  <CardDescription>
-                    Herramientas para la gestión y control de la aplicación.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 gap-4">
-                   <Button variant="destructive" className="w-full" onClick={() => setResetDialogOpen(true)}>
-                    <RefreshCcw className="mr-2 h-4 w-4" />
-                    Inicializar / Reiniciar Restaurante
-                  </Button>
-                  <Button variant="outline" className="w-full" onClick={() => router.push(`/${restaurantId}/admin/data-viewer`)}>
-                      <Database className="mr-2 h-4 w-4" />
-                      Ver Historial de Órdenes
-                  </Button>
-                </CardContent>
-              </Card>
 
               <Card className="shadow-lg">
                 <CardHeader>
@@ -1765,25 +1723,6 @@ export default function AdminPage() {
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
-
-      <AlertDialog open={isResetDialogOpen} onOpenChange={setResetDialogOpen}>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-              <AlertDialogTitle>¿Confirmar Inicialización del Restaurante?</AlertDialogTitle>
-              <AlertDialogDescription>
-                  Esta acción cargará los datos iniciales (menú, mesas, inventario) y borrará todas las órdenes completadas. Es ideal para la primera configuración o para reiniciar el sistema. Esta acción es irreversible.
-              </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSystemReset} className={buttonVariants({ variant: "destructive" })}>Confirmar e Inicializar</AlertDialogAction>
-              </AlertDialogFooter>
-          </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
-
-    
-
-    
