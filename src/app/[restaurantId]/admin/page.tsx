@@ -11,7 +11,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Pencil, Trash2, Plus, Sparkles, X, Package, Eye, BookText, ChevronsUpDown, GitBranchPlus, Combine, Lightbulb, ChefHat, ShieldCheck } from 'lucide-react';
+import { Pencil, Trash2, Plus, Sparkles, X, Package, Eye, BookText, ChevronsUpDown, GitBranchPlus, Combine, Lightbulb, ChefHat, ShieldCheck, History } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import useRealtimeData from '@/hooks/useRealtimeData';
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +33,13 @@ import {
   DialogFooter,
   DialogDescription as DialogDesc,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bar, BarChart, XAxis, YAxis, PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, LabelList } from "recharts";
@@ -43,13 +50,15 @@ import { getDishDescriptionAction, getDailySpecialAction } from '../../actions';
 import type { GenerateDailySpecialOutput } from '@/ai/flows/generate-daily-special';
 import { ConnectionStatus } from '@/components/app/ConnectionStatus';
 import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BackButton } from '@/components/app/BackButton';
 import { useParams, useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const PinModal = ({
     isOpen,
@@ -171,7 +180,6 @@ const DailySpecial = ({ menu, inventory, isLoading }: { menu: Menu, inventory: I
 
 const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null, isLoading: boolean }) => {
     const [salesPeriod, setSalesPeriod] = React.useState("today");
-    const [isDetailsModalOpen, setDetailsModalOpen] = React.useState(false);
 
     const salesData = React.useMemo(() => {
         if (!orders || !Array.isArray(orders)) return { totalSales: 0, totalOrders: 0, allItemsSold: [], topItemsByQuantity: [], topItemsByRevenue: [] };
@@ -262,14 +270,6 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
       return acc;
     }, {} as ChartConfig);
 
-    const periodLabels: { [key: string]: string } = {
-        today: "Hoy",
-        yesterday: "Ayer",
-        last7days: "Últimos 7 días",
-        this_month: "Este Mes",
-        last_month: "Mes Pasado",
-    };
-
     if (isLoading) {
         return (
             <Card className="shadow-lg">
@@ -285,146 +285,95 @@ const SalesAnalytics = ({ orders, isLoading }: { orders: CompletedOrder[] | null
                         <Skeleton className="h-6 w-1/2 mb-4" />
                         <Skeleton className="min-h-[250px] w-full" />
                     </div>
-                     <Skeleton className="h-10 w-full" />
                 </CardContent>
             </Card>
         );
     }
 
     return (
-        <>
-            <Card className="shadow-lg">
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle>Análisis de Ventas</CardTitle>
-                        <Select value={salesPeriod} onValueChange={setSalesPeriod}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Seleccionar periodo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="today">Hoy</SelectItem>
-                                <SelectItem value="yesterday">Ayer</SelectItem>
-                                <SelectItem value="last7days">Últimos 7 días</SelectItem>
-                                <SelectItem value="this_month">Este Mes</SelectItem>
-                                <SelectItem value="last_month">Mes Pasado</SelectItem>
-                            </SelectContent>
-                        </Select>
+        <Card className="shadow-lg">
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <CardTitle>Análisis de Ventas</CardTitle>
+                    <Select value={salesPeriod} onValueChange={setSalesPeriod}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Seleccionar periodo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="today">Hoy</SelectItem>
+                            <SelectItem value="yesterday">Ayer</SelectItem>
+                            <SelectItem value="last7days">Últimos 7 días</SelectItem>
+                            <SelectItem value="this_month">Este Mes</SelectItem>
+                            <SelectItem value="last_month">Mes Pasado</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                        <p className="text-sm text-muted-foreground">Ventas Totales</p>
+                        <p className="text-2xl font-bold">${salesData.totalSales.toFixed(2)}</p>
                     </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4 text-center">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Ventas Totales</p>
-                            <p className="text-2xl font-bold">${salesData.totalSales.toFixed(2)}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Órdenes Totales</p>
-                            <p className="text-2xl font-bold">{salesData.totalOrders}</p>
-                        </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground">Órdenes Totales</p>
+                        <p className="text-2xl font-bold">{salesData.totalOrders}</p>
                     </div>
-                    <Tabs defaultValue="revenue" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="revenue">Top 5 por Ingresos</TabsTrigger>
-                        <TabsTrigger value="quantity">Top 5 por Cantidad</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="revenue">
-                        <ChartContainer config={chartConfigPie} className="min-h-[250px] w-full aspect-square">
-                           <PieChart>
-                             <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                             <Pie data={salesData.topItemsByRevenue} dataKey="revenue" nameKey="name" innerRadius={60}>
-                               {salesData.topItemsByRevenue.map((entry) => (
-                                 <Cell key={entry.name} fill={chartConfigPie[entry.name]?.color} />
-                               ))}
-                             </Pie>
-                             <Legend content={({ payload }) => (
-                               <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
-                                 {payload?.map((entry, index) => (
-                                   <div key={`item-${index}`} className="flex items-center gap-2 text-xs">
-                                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
-                                     <span className="text-muted-foreground">{entry.value}</span>
-                                   </div>
-                                 ))}
-                               </div>
-                             )}/>
-                           </PieChart>
-                        </ChartContainer>
-                      </TabsContent>
-                       <TabsContent value="quantity">
-                        <ChartContainer config={chartConfigBar} className="min-h-[250px] w-full mt-4">
-                            <BarChart accessibilityLayer data={salesData.topItemsByQuantity} layout="vertical" margin={{left: 20, right: 40}}>
-                            <YAxis
-                                dataKey="name"
-                                type="category"
-                                tickLine={false}
-                                axisLine={false}
-                                stroke="hsl(var(--muted-foreground))"
-                                fontSize={12}
-                                width={100}
-                                tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
-                            />
-                            <XAxis type="number" dataKey="quantity" hide />
-                            <ChartTooltip
-                                cursor={false}
-                                content={<ChartTooltipContent indicator="dot" />}
-                            />
-                            <Bar dataKey="quantity" layout="vertical" fill="var(--color-quantity)" radius={4}>
-                                <LabelList dataKey="quantity" position="right" offset={8} className="fill-foreground" fontSize={12} />
-                            </Bar>
-                            </BarChart>
-                        </ChartContainer>
-                      </TabsContent>
-                    </Tabs>
-                    <Button variant="outline" className="w-full" onClick={() => setDetailsModalOpen(true)}>
-                        <Eye className="mr-2 h-4 w-4"/>
-                        Ver Desglose Completo de Ventas
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Dialog open={isDetailsModalOpen} onOpenChange={setDetailsModalOpen}>
-                <DialogContent className="max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>Desglose de Ventas: {periodLabels[salesPeriod]}</DialogTitle>
-                        <DialogDesc>
-                            Registro detallado de cada producto vendido, incluyendo variantes.
-                        </DialogDesc>
-                    </DialogHeader>
-                    <div className="mt-4">
-                        <ScrollArea className="h-[60vh]">
-                            <UiTable>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Producto (Detalle)</TableHead>
-                                        <TableHead className="text-right">Cantidad</TableHead>
-                                        <TableHead className="text-right">Ingresos</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {salesData.allItemsSold.length > 0 ? (
-                                        salesData.allItemsSold.map(item => (
-                                            <TableRow key={item.name}>
-                                                <TableCell className="font-medium">{item.name}</TableCell>
-                                                <TableCell className="text-right">{item.quantity}</TableCell>
-                                                <TableCell className="text-right">${item.revenue.toFixed(2)}</TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                                                No hay datos de ventas para mostrar.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </UiTable>
-                        </ScrollArea>
-                    </div>
-                    <DialogFooter className="mt-4">
-                        <Button type="button" variant="secondary" onClick={() => setDetailsModalOpen(false)}>Cerrar</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </>
+                </div>
+                <Tabs defaultValue="revenue" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="revenue">Top 5 por Ingresos</TabsTrigger>
+                    <TabsTrigger value="quantity">Top 5 por Cantidad</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="revenue">
+                    <ChartContainer config={chartConfigPie} className="min-h-[250px] w-full aspect-square">
+                        <PieChart>
+                            <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                            <Pie data={salesData.topItemsByRevenue} dataKey="revenue" nameKey="name" innerRadius={60}>
+                            {salesData.topItemsByRevenue.map((entry) => (
+                                <Cell key={entry.name} fill={chartConfigPie[entry.name]?.color} />
+                            ))}
+                            </Pie>
+                            <Legend content={({ payload }) => (
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center mt-4">
+                                {payload?.map((entry, index) => (
+                                <div key={`item-${index}`} className="flex items-center gap-2 text-xs">
+                                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                    <span className="text-muted-foreground">{entry.value}</span>
+                                </div>
+                                ))}
+                            </div>
+                            )}/>
+                        </PieChart>
+                    </ChartContainer>
+                    </TabsContent>
+                    <TabsContent value="quantity">
+                    <ChartContainer config={chartConfigBar} className="min-h-[250px] w-full mt-4">
+                        <BarChart accessibilityLayer data={salesData.topItemsByQuantity} layout="vertical" margin={{left: 20, right: 40}}>
+                        <YAxis
+                            dataKey="name"
+                            type="category"
+                            tickLine={false}
+                            axisLine={false}
+                            stroke="hsl(var(--muted-foreground))"
+                            fontSize={12}
+                            width={100}
+                            tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
+                        />
+                        <XAxis type="number" dataKey="quantity" hide />
+                        <ChartTooltip
+                            cursor={false}
+                            content={<ChartTooltipContent indicator="dot" />}
+                        />
+                        <Bar dataKey="quantity" layout="vertical" fill="var(--color-quantity)" radius={4}>
+                            <LabelList dataKey="quantity" position="right" offset={8} className="fill-foreground" fontSize={12} />
+                        </Bar>
+                        </BarChart>
+                    </ChartContainer>
+                    </TabsContent>
+                </Tabs>
+            </CardContent>
+        </Card>
     );
 };
 
@@ -459,7 +408,7 @@ const menuItemSchema = z.object({
     } catch (e) {
       return false;
     }
-  }, { message: 'Debe ser un objeto JSON válido, ej: {"Queso Extra": 20}' }),
+  }, { message: `Debe ser un objeto JSON válido, ej: {"Queso Extra": 20}` }),
   disableRules: z.array(z.object({
     when: z.string().min(1, "La opción 'Cuando' es requerida."),
     disable: z.array(z.string()).min(1, "Debes seleccionar al menos una opción para deshabilitar."),
@@ -524,6 +473,9 @@ export default function AdminPage() {
   const [isInventoryModalOpen, setInventoryModalOpen] = React.useState(false);
   const [editingInventoryItem, setEditingInventoryItem] = React.useState<InventoryItem | null>(null);
   const [isPinVerified, setPinVerified] = React.useState(false);
+  const [selectedTableIdForHistory, setSelectedTableIdForHistory] = React.useState<number | null>(null);
+  const [isHistorySheetOpen, setIsHistorySheetOpen] = React.useState(false);
+  const [selectedOrderForDetail, setSelectedOrderForDetail] = React.useState<CompletedOrder | null>(null);
 
   const isPinSecurityEnabled = features?.pin_security === true;
 
@@ -535,6 +487,23 @@ export default function AdminPage() {
         toast({ title: "PIN Incorrecto", description: "El PIN no es válido. Inténtalo de nuevo.", variant: "destructive" });
     }
   };
+  
+  const handleViewTableHistory = (tableId: number) => {
+    setSelectedTableIdForHistory(tableId);
+    setIsHistorySheetOpen(true);
+  };
+
+  const handleViewOrderDetails = (order: CompletedOrder) => {
+    setSelectedOrderForDetail(order);
+  };
+  
+  const filteredCompletedOrders = React.useMemo(() => {
+    if (!completedOrders || !selectedTableIdForHistory) return [];
+    return completedOrders
+        .filter(order => order.tableId === selectedTableIdForHistory)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [completedOrders, selectedTableIdForHistory]);
+
 
   const sanitizedMenu = React.useMemo<Menu>(() => {
     return {
@@ -548,6 +517,7 @@ export default function AdminPage() {
     defaultValues: {
       name: "",
       price: undefined,
+      category: "platillos",
       description: "",
       ingredients: "",
       isMixto: false,
@@ -935,7 +905,10 @@ export default function AdminPage() {
 
               <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Gestionar Mesas</CardTitle>
+                    <div>
+                        <CardTitle>Gestionar Mesas</CardTitle>
+                        <CardDescription>Click en una mesa para ver su historial.</CardDescription>
+                    </div>
                   <Button onClick={handleAddTable} size="sm" disabled={dataLoading}>
                       <Plus className="mr-2 h-4 w-4" /> Agregar
                   </Button>
@@ -951,14 +924,19 @@ export default function AdminPage() {
                       <div className="grid grid-cols-5 gap-3 pr-2">
                         {tables && [...tables].sort((a,b) => a.id - b.id).map(table => (
                           <div key={table.id} className="relative group">
-                            <div className="aspect-square flex items-center justify-center bg-background rounded-lg border">
-                              <span className="text-xl font-bold text-secondary-foreground">{table.id}</span>
-                            </div>
+                             <Button
+                              variant="outline"
+                              className="aspect-square w-full h-auto text-xl font-bold text-secondary-foreground hover:bg-accent/50 focus:ring-2 focus:ring-primary"
+                              onClick={() => handleViewTableHistory(table.id)}
+                            >
+                              {table.id}
+                            </Button>
                             <Button 
                               variant="ghost" 
                               size="icon" 
                               className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/90"
                               onClick={() => confirmDeleteTable(table)}
+                              disabled={table.status !== 'libre'}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -1086,6 +1064,87 @@ export default function AdminPage() {
           </div>
         </main>
       </div>
+
+      <Sheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen}>
+        <SheetContent className="w-full sm:max-w-md">
+            <SheetHeader>
+                <SheetTitle>Historial de Mesa #{selectedTableIdForHistory}</SheetTitle>
+                <SheetDescription>
+                    Aquí se muestran todas las cuentas cerradas para esta mesa. Haz clic en una para ver el detalle.
+                </SheetDescription>
+            </SheetHeader>
+            <ScrollArea className="h-[calc(100vh-80px)] mt-4 pr-4">
+              <div className="space-y-3">
+                {filteredCompletedOrders.length > 0 ? (
+                  filteredCompletedOrders.map(order => (
+                    <button key={order.id} className="w-full text-left" onClick={() => handleViewOrderDetails(order)}>
+                        <Card className="hover:bg-secondary transition-colors">
+                            <CardContent className="p-4 flex justify-between items-center">
+                                <div>
+                                    <p className="font-semibold">{format(new Date(order.date), "dd MMM yyyy", { locale: es })}</p>
+                                    <p className="text-sm text-muted-foreground">{format(new Date(order.date), "h:mm a", { locale: es })}</p>
+                                </div>
+                                <p className="text-lg font-bold text-primary">${order.total.toFixed(2)}</p>
+                            </CardContent>
+                        </Card>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <History className="mx-auto h-12 w-12 mb-4" />
+                    <h3 className="text-xl font-semibold">Sin Historial</h3>
+                    <p>Esta mesa aún no tiene órdenes completadas.</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={!!selectedOrderForDetail} onOpenChange={(isOpen) => !isOpen && setSelectedOrderForDetail(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Detalle de la Orden</DialogTitle>
+                 {selectedOrderForDetail && <DialogDesc>
+                    Mesa #{selectedOrderForDetail.tableId} - {format(new Date(selectedOrderForDetail.date), "dd MMMM yyyy, h:mm a", { locale: es })}
+                </DialogDesc>}
+            </DialogHeader>
+            <div className="mt-2">
+                <ScrollArea className="max-h-96">
+                    <UiTable>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px]">Cant.</TableHead>
+                                <TableHead>Producto</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {selectedOrderForDetail?.order.map(item => (
+                                <TableRow key={item.id}>
+                                    <TableCell>{item.qty}</TableCell>
+                                    <TableCell>
+                                        {item.name}
+                                        {item.variants && item.variants.length > 0 && (
+                                            <span className="text-xs text-muted-foreground ml-2">({item.variants.join(', ')})</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-right">${(item.price * item.qty).toFixed(2)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </UiTable>
+                </ScrollArea>
+            </div>
+            <DialogFooter className="mt-4 sm:justify-between items-center border-t pt-4">
+                 <div className="text-2xl font-bold">
+                    TOTAL: <span className="text-primary">${selectedOrderForDetail?.total.toFixed(2)}</span>
+                </div>
+                <Button type="button" variant="secondary" onClick={() => setSelectedOrderForDetail(null)}>Cerrar</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={isItemModalOpen} onOpenChange={handleItemModalOpenChange}>
         <DialogContent className="max-w-2xl">
