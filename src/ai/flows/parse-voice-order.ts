@@ -53,20 +53,18 @@ const prompt = ai.definePrompt({
 7.  **Pedidos Mixtos:** Para platillos 'mixtos', la orden debe especificar las dos preparaciones. Identifícalas y anótalas.
 
 **Ejemplos de la lógica a seguir con el menú actual:**
-*   **Orden de voz:** "mándame dos tostadas de camarón, un filete empanizado media orden sin pepino y una coca de vidrio"
-*   **Análisis:**
-    *   "dos tostadas de camarón" se convierte en: {qty: 2, name: "Tostada de Camarón"}.
-    *   "un filete empanizado media orden sin pepino" se convierte en: {qty: 1, name: "Filete", variants: ["Empanizado", "Media Orden", "Sin Pepino"]}.
-    *   "una coca de vidrio" se convierte en: {qty: 1, name: "Coca-Cola Vidrio"}.
-*   **Salida JSON Correcta:** \`{"items": [{"qty": 2, "name": "Tostada de Camarón", "variants": []}, {"qty": 1, "name": "Filete", "variants": ["Empanizado", "Media Orden", "Sin Pepino"]}, {"qty": 1, "name": "Coca-Cola Vidrio", "variants": []}]}\`
+*   **Orden de voz:** "mándame dos tostadas de camarón y una coca de vidrio"
+*   **Salida JSON Correcta (lo que debes generar):**
+    {"items": [{"qty": 2, "name": "Tostada de Camarón", "variants": []}, {"qty": 1, "name": "Coca-Cola Vidrio", "variants": []}]}
 
 *   **Orden de voz:** "un cóctel grande de pulpo sin cilantro y una michelada con camarones"
-*   **Salida JSON Correcta:** \`{"items": [{"qty": 1, "name": "Cóctel", "variants": ["Grande", "Pulpo", "Sin Cilantro"]}, {"qty": 1, "name": "Michelada con Camarones", "variants": []}]}\`
+*   **Salida JSON Correcta (lo que debes generar):**
+    {"items": [{"qty": 1, "name": "Cóctel", "variants": ["Grande", "Pulpo", "Sin cilantro"]}, {"qty": 1, "name": "Michelada con Camarones", "variants": []}]}
 
 *   **Orden de voz:** "quiero un caldo"
-*   **Análisis:** Varios caldos requieren "Porción". La orden es ambigua.
-*   **Salida JSON Correcta:** \`{"items": []}\`
-
+*   **Análisis:** La palabra "caldo" es ambigua porque hay varios en el menú y no se especifica la porción obligatoria.
+*   **Salida JSON Correcta (lo que debes generar):**
+    {"items": []}
 
 **Datos para procesar:**
 La transcripción de la orden del mesero es: {{{transcript}}}
