@@ -5,7 +5,7 @@ import * as React from 'react';
 import type { Table, OrderItem, MenuItem, TableStatus, Menu, CompletedOrder, OrderItemStatus, InventoryItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package, Timer as TimerIcon } from 'lucide-react';
+import { Plus, Send, Receipt, Check, Trash2, ChefHat, Pencil, Mic, Loader2, Package, Timer as TimerIcon, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MenuModal } from '@/components/app/MenuModal';
 import { AccountModal } from '@/components/app/AccountModal';
@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Input } from '@/components/ui/input';
 import { initialMenu, initialCompletedOrders, initialTables, initialInventory } from '@/lib/data';
 import { useParams } from 'next/navigation';
-import { parseVoiceOrderAction } from '@/app/actions';
+import { useVoiceRecognition } from '@/hooks/useVoiceRecognition';
 import type { ParseVoiceOrderOutput } from '@/ai/flows/parse-voice-order';
 
 const tableStatusConfig: Record<TableStatus, { color: string; text: string }> = {
@@ -76,14 +76,15 @@ export default function WaiterPage() {
   const [isAccountModalOpen, setAccountModalOpen] = React.useState(false);
   const [itemToEditPrice, setItemToEditPrice] = React.useState<OrderItem | null>(null);
   const [newPrice, setNewPrice] = React.useState<string>("");
-
+  
   const [isVoiceModalOpen, setVoiceModalOpen] = React.useState(false);
-  const [isListening, setIsListening] = React.useState(false);
-  const [isProcessing, setIsProcessing] = React.useState(false);
-  const [transcript, setTranscript] = React.useState("");
   const [voiceOrderItems, setVoiceOrderItems] = React.useState<ParseVoiceOrderOutput['items']>([]);
-  const recognitionRef = React.useRef<any>(null);
 
+  const { isListening, isProcessing, transcript, startListening, stopListening } = useVoiceRecognition({
+    menu,
+    onParseComplete: setVoiceOrderItems,
+    onError: (title, description) => toast({ title, description, variant: 'destructive' }),
+  });
 
   const selectedTable = React.useMemo(() => tables?.find(t => t.id === selectedTableId), [tables, selectedTableId]);
   
@@ -135,7 +136,7 @@ export default function WaiterPage() {
             description: `Por favor, establece el precio para "${item.name}" usando el ícono del lápiz.`,
             variant: "destructive",
         });
-        return; // Return a value or promise to indicate failure
+        return;
     }
 
     const newOrderItem: OrderItem = {
@@ -316,7 +317,6 @@ export default function WaiterPage() {
   const markAsPaid = async () => {
     if (!selectedTableId || !selectedTable) return;
 
-    // --- Start Inventory Deduction Logic ---
     const inventoryDeductions = new Map<string, number>();
     (selectedTable.order || []).forEach(orderItem => {
       const menuItem = menuItems.find(mi => mi.id === orderItem.menuItemId);
@@ -332,7 +332,6 @@ export default function WaiterPage() {
     });
 
     try {
-      // 1. Add to Completed Orders (Most Critical)
       const newCompletedOrder: CompletedOrder = {
         id: `order-${Date.now()}-${selectedTableId}`,
         tableId: selectedTable.id,
@@ -346,7 +345,6 @@ export default function WaiterPage() {
          return newOrders;
       });
 
-      // 2. Reset Table (Second Critical)
       await updateTables(currentTables => {
         const newTables = JSON.parse(JSON.stringify(currentTables || []));
         const tableIndex = newTables.findIndex((t: Table) => t.id === selectedTableId);
@@ -358,7 +356,6 @@ export default function WaiterPage() {
         return newTables;
       });
 
-      // 3. Update Inventory (Less Critical, can be manually adjusted if fails)
       if (inventoryDeductions.size > 0) {
         await updateInventory(currentInventory => {
           const newInventory = JSON.parse(JSON.stringify(currentInventory || []));
@@ -418,63 +415,11 @@ export default function WaiterPage() {
         toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   };
-
-  const handleStartListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        toast({ title: "Navegador no compatible", description: "La toma de pedidos por voz no está disponible en tu navegador.", variant: "destructive"});
-        return;
-    }
-
-    if (!recognitionRef.current) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.lang = 'es-MX';
-        recognition.interimResults = true;
-
-        recognition.onstart = () => {
-            setIsListening(true);
-            setTranscript('');
-            setVoiceOrderItems([]);
-        };
-
-        recognition.onresult = (event: any) => {
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                finalTranscript += event.results[i][0].transcript;
-            }
-            setTranscript(finalTranscript);
-        };
-        
-        recognition.onend = async () => {
-            setIsListening(false);
-            if (transcript.trim()) {
-                setIsProcessing(true);
-                try {
-                    const parsedItems = await parseVoiceOrderAction(transcript.trim(), menu!);
-                    setVoiceOrderItems(parsedItems);
-                    if (parsedItems.length === 0) {
-                      toast({ title: "No se detectaron platillos", description: "No se pudo reconocer ningún platillo del menú en tu orden. Intenta de nuevo."});
-                    }
-                } catch (error) {
-                    toast({ title: "Error de IA", description: "No se pudo procesar la orden.", variant: "destructive"});
-                } finally {
-                    setIsProcessing(false);
-                }
-            }
-        };
-
-        recognition.onerror = (event: any) => {
-            console.error('Speech recognition error', event.error);
-            setIsListening(false);
-            toast({ title: "Error de micrófono", description: "No se pudo acceder al micrófono.", variant: "destructive"});
-        };
-        
-        recognitionRef.current = recognition;
-    }
-    
-    setVoiceModalOpen(true);
-    recognitionRef.current.start();
+  
+  const handleVoiceModalOpen = () => {
+      setVoiceOrderItems([]);
+      setVoiceModalOpen(true);
+      startListening();
   };
   
   const handleConfirmVoiceOrder = async () => {
@@ -516,8 +461,6 @@ export default function WaiterPage() {
     }
 
     setVoiceModalOpen(false);
-    setTranscript('');
-    setVoiceOrderItems([]);
   };
 
   const renderVariants = (variants: string[]) => {
@@ -742,7 +685,7 @@ export default function WaiterPage() {
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button size="lg" variant="secondary" onClick={handleStartListening} className="h-14">
+                      <Button size="lg" variant="secondary" onClick={handleVoiceModalOpen} className="h-14">
                         <Mic className="h-6 w-6"/>
                       </Button>
                     </TooltipTrigger>
@@ -804,8 +747,11 @@ export default function WaiterPage() {
                         <Mic className={cn("mr-2 h-5 w-5", isListening && "text-destructive animate-pulse")} />
                         Tomar Orden por Voz
                     </DialogTitle>
-                    <DialogDescription>
-                        {isListening ? "Escuchando..." : "Presiona el micrófono para empezar a dictar la orden."}
+                     <DialogDescription>
+                        {isListening 
+                            ? "Escuchando... Presiona el botón para detener." 
+                            : "Presiona el micrófono para empezar a dictar la orden."
+                        }
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
@@ -838,9 +784,17 @@ export default function WaiterPage() {
                 <DialogFooter className="gap-2 sm:justify-between">
                     <Button variant="ghost" onClick={() => setVoiceModalOpen(false)}>Cancelar</Button>
                     <div className="flex gap-2">
-                      <Button variant="outline" onClick={handleStartListening} disabled={isListening || isProcessing}>
-                          <Mic className="mr-2 h-4 w-4"/>
-                          {isListening ? "Escuchando..." : "Grabar de Nuevo"}
+                      <Button
+                        variant="outline"
+                        onClick={isListening ? stopListening : startListening}
+                        disabled={isProcessing}
+                      >
+                        {isListening ? (
+                           <Square className="mr-2 h-4 w-4" />
+                        ) : (
+                           <Mic className="mr-2 h-4 w-4"/>
+                        )}
+                        {isListening ? "Detener" : "Grabar de Nuevo"}
                       </Button>
                       <Button onClick={handleConfirmVoiceOrder} disabled={voiceOrderItems.length === 0 || isProcessing}>
                           Confirmar y Agregar
